@@ -1,0 +1,556 @@
+// 添加交易页面 - 毛玻璃风格记账录入界面
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:drift/drift.dart' hide Column;
+import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/data/database/app_database.dart';
+import 'package:timi/providers/database_provider.dart';
+import 'package:timi/providers/ui_providers.dart';
+import 'package:timi/ui/shared/icon_helpers.dart';
+
+/// 添加交易页面主组件
+class AddTransactionScreen extends ConsumerStatefulWidget {
+  const AddTransactionScreen({super.key});
+
+  @override
+  ConsumerState<AddTransactionScreen> createState() =>
+      _AddTransactionScreenState();
+}
+
+class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
+  final _amountController = TextEditingController(text: '');
+  final _noteController = TextEditingController();
+  final _amountFocusNode = FocusNode();
+  String _type = 'expense';
+  CategoriesTableData? _selectedCategory;
+  final DateTime _selectedDate = DateTime.now();
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    _amountFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _setQuickAmount(String value) {
+    _amountController.text = value;
+    _amountController.selection = TextSelection.fromPosition(
+      TextPosition(offset: value.length),
+    );
+  }
+
+  Future<void> _save() async {
+    final amountText = _amountController.text.trim();
+    if (amountText.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入金额')));
+      return;
+    }
+    final amount = double.tryParse(amountText);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入有效金额')));
+      return;
+    }
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请选择分类')));
+      return;
+    }
+
+    final now = DateTime.now();
+    final dao = ref.read(transactionDaoProvider);
+    await dao.insert(
+      TransactionsTableCompanion.insert(
+        amount: amount,
+        categoryId: _selectedCategory!.id,
+        type: _type,
+        date: _selectedDate,
+        note: _noteController.text.isNotEmpty
+            ? Value(_noteController.text.trim())
+            : const Value.absent(),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    if (mounted) context.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(categoriesByTypeProvider(_type));
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildHeader(context),
+                      const SizedBox(height: 20),
+                      _buildTypeToggle(context),
+                      const SizedBox(height: 20),
+                      _buildAmountCard(context),
+                      const SizedBox(height: 20),
+                      _buildCategorySection(categoriesAsync, context),
+                      const SizedBox(height: 20),
+                      _buildNoteInput(context),
+                      const SizedBox(height: 24),
+                      _buildSaveButton(context),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => context.pop(),
+          child: Text(
+            '取消',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            _type == 'expense' ? '添加支出' : '添加收入',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textOnSurface(context),
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: _save,
+          child: Text(
+            '完成',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeToggle(BuildContext context) {
+    final isExpense = _type == 'expense';
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.glassFillStrong(context),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _type = 'expense'),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isExpense ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '支出',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isExpense
+                        ? const Color(0xFF1A1A1A)
+                        : AppTheme.textOnSurfaceTertiary(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _type = 'income'),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: !isExpense ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '收入',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: !isExpense
+                        ? const Color(0xFF1A1A1A)
+                        : AppTheme.textOnSurfaceTertiary(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.glassDecorationFull(
+        context: context,
+        radius: 20,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '金额',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.textOnSurfaceTertiary(context),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '¥',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textOnSurface(context),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: TextField(
+                    controller: _amountController,
+                    focusNode: _amountFocusNode,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textOnSurface(context),
+                      height: 1.0,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: '0.00',
+                      hintStyle: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textOnSurface(
+                          context,
+                        ).withValues(alpha: 0.24),
+                      ),
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _QuickAmountButton(
+                label: '50',
+                onTap: () => _setQuickAmount('50'),
+              ),
+              const SizedBox(width: 8),
+              _QuickAmountButton(
+                label: '100',
+                onTap: () => _setQuickAmount('100'),
+              ),
+              const SizedBox(width: 8),
+              _QuickAmountButton(
+                label: '200',
+                onTap: () => _setQuickAmount('200'),
+              ),
+              const SizedBox(width: 8),
+              _QuickAmountButton(
+                label: '500',
+                onTap: () => _setQuickAmount('500'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySection(
+    AsyncValue<List<CategoriesTableData>> categoriesAsync,
+    BuildContext context,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '选择分类',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textOnSurface(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        categoriesAsync.when(
+          data: (categories) {
+            if (categories.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    '暂无分类，请先在分类管理中创建',
+                    style: TextStyle(
+                      color: AppTheme.textOnSurface(
+                        context,
+                      ).withValues(alpha: 0.38),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              );
+            }
+            final displayList = categories.length > 8
+                ? categories.sublist(0, 8)
+                : categories;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayList.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.75,
+              ),
+              itemBuilder: (context, index) {
+                final cat = displayList[index];
+                final isSelected = _selectedCategory?.id == cat.id;
+                return _CategoryGridCell(
+                  category: cat,
+                  isSelected: isSelected,
+                  onTap: () => setState(() => _selectedCategory = cat),
+                );
+              },
+            );
+          },
+          loading: () => Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(
+                color: AppTheme.textOnSurface(context).withValues(alpha: 0.54),
+              ),
+            ),
+          ),
+          error: (err, _) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                '$err',
+                style: TextStyle(
+                  color: AppTheme.textOnSurface(
+                    context,
+                  ).withValues(alpha: 0.54),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteInput(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.glassFillStrong(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.glassStroke(context)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        children: [
+          Icon(
+            PhosphorIconsLight.note,
+            size: 18,
+            color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _noteController,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textOnSurface(context),
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: '添加备注...',
+                hintStyle: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textOnSurface(context).withValues(alpha: 0.4),
+                ),
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton(BuildContext context) {
+    return GestureDetector(
+      onTap: _save,
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppTheme.glassFillAccent(context),
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: AppTheme.glassStroke(context)),
+        ),
+        child: Center(
+          child: Text(
+            '保存',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textOnSurface(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 分类网格单元格：48×48 圆形图标 + 底部名称
+class _CategoryGridCell extends StatelessWidget {
+  final CategoriesTableData category;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryGridCell({
+    required this.category,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final catColor = parseHexColor(category.color);
+    final bgColor = catColor.withValues(alpha: 0.2);
+    final borderColor = isSelected ? catColor : Colors.transparent;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor, width: 1.5),
+            ),
+            child: Icon(
+              resolveCategoryIcon(category.icon),
+              color: catColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            category.name,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppTheme.textOnSurface(context).withValues(alpha: 0.8),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 快捷金额药丸按钮：60×32，圆角 16
+class _QuickAmountButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickAmountButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 60,
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppTheme.glassFillStrong(context),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textOnSurface(context),
+          ),
+        ),
+      ),
+    );
+  }
+}

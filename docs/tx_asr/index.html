@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>腾讯云实时语音识别 - 最终无错版</title>
+    <style>
+        #logs {
+            margin-top: 20px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+        .log { margin: 4px 0; }
+        .final { color: #007bff; font-weight: bold; }
+        .middle { color: #333; }
+        .error { color: red; }
+        .info { color: #28a745; }
+    </style>
+</head>
+<body>
+    <h3>腾讯云实时语音识别（Web）</h3>
+    <button onclick="startRecord()">开始录音</button>
+    <button onclick="stopRecord()">停止录音</button>
+    <div id="logs"></div>
+
+    <script>
+        // ===================== 【改成你自己的腾讯云配置】 =====================
+        const APPID = "APPID";
+        const SECRET_ID = "SECRET_ID";
+        const SECRET_KEY = "SECRET_KEY";
+        const ENGINE_MODEL = "16k_zh"; // 中文通用
+
+        // 全局变量
+        let ws;
+        let mediaStream;
+        let audioContext;
+        let scriptProcessor;
+        let isRecording = false;
+
+        // 日志打印
+        function log(text, type = "info") {
+            const logs = document.getElementById("logs");
+            const div = document.createElement("div");
+            div.className = "log " + type;
+            div.textContent = text;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type}]`, text);
+        }
+
+        // ===================== 腾讯云标准签名 =====================
+        async function getSignature(params, secretKey) {
+            const keys = Object.keys(params).sort();
+            const queryString = keys.map(key => `${key}=${params[key]}`).join('&');
+            const signStr = `asr.cloud.tencent.com/asr/v2/${APPID}?${queryString}`;
+
+            const encoder = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                "raw", encoder.encode(secretKey),
+                { name: "HMAC", hash: "SHA-1" },
+                false, ["sign"]
+            );
+            const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(signStr));
+            return btoa(String.fromCharCode(...new Uint8Array(signature)));
+        }
+
+        // ===================== 建立WebSocket连接 =====================
+        async function connect() {
+            const timestamp = Math.floor(Date.now() / 1000);
+            const expired = timestamp + 86400;
+            const nonce = Math.floor(Math.random() * 1000000000);
+            const voiceId = "web_" + Date.now();
+
+            const params = {
+                secretid: SECRET_ID,
+                timestamp: timestamp,
+                expired: expired,
+                nonce: nonce,
+                engine_model_type: ENGINE_MODEL,
+                voice_id: voiceId,
+                voice_format: 1,
+                sample_rate: 16000
+            };
+
+            const signature = await getSignature(params, SECRET_KEY);
+
+            let url = `wss://asr.cloud.tencent.com/asr/v2/${APPID}?`;
+            url += `secretid=${SECRET_ID}`;
+            url += `&timestamp=${timestamp}`;
+            url += `&expired=${expired}`;
+            url += `&nonce=${nonce}`;
+            url += `&engine_model_type=${ENGINE_MODEL}`;
+            url += `&voice_id=${voiceId}`;
+            url += `&voice_format=1`;
+            url += `&sample_rate=16000`;
+            url += `&signature=${encodeURIComponent(signature)}`;
+
+            ws = new WebSocket(url);
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => log("WebSocket 连接成功 ✅", "info");
+            ws.onclose = () => log("WebSocket 关闭", "info");
+            ws.onerror = (e) => log("WebSocket 错误：" + e, "error");
+
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    console.log("接收结果：", data);
+
+                    if (data.code !== 0) {
+                        log(`错误：${data.message}（${data.code}）`, "error");
+                        return;
+                    }
+
+                    if (data.result && data.result.voice_text_str) {
+                        const text = data.result.voice_text_str;
+                        if (data.final === 1) {
+                            log(`【最终结果】：${text}`, "final");
+                        } else {
+                            log(`【中间结果】：${text}`, "middle");
+                        }
+                    }
+                } catch (err) {
+                    log("解析错误：" + err, "error");
+                }
+            };
+        }
+
+        // ===================== 开始录音 =====================
+        async function startRecord() {
+            if (isRecording) return;
+            isRecording = true;
+            log("开始录音 🎙️", "info");
+
+            await connect();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream = stream;
+
+            audioContext = new AudioContext({ sampleRate: 16000 });
+            await audioContext.resume();
+
+            const source = audioContext.createMediaStreamSource(stream);
+            scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            scriptProcessor.onaudioprocess = (e) => {
+                if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+                const inputData = e.inputBuffer.getChannelData(0);
+                const bytes = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                    const s = Math.max(-1, Math.min(1, inputData[i]));
+                    bytes[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+                ws.send(bytes.buffer);
+            };
+
+            source.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+        }
+
+        // ===================== 停止录音 =====================
+        function stopRecord() {
+            if (!isRecording) return;
+            isRecording = false;
+            log("停止录音 ⏹️", "info");
+
+            if (ws) {
+                ws.send(JSON.stringify({ type: "end" }));
+                ws.close();
+                ws = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            if (scriptProcessor) {
+                scriptProcessor.disconnect();
+                scriptProcessor = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+        }
+    </script>
+</body>
+</html>
