@@ -4,13 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/providers/ui_providers.dart';
+import 'package:timi/data/database/daos/transaction_dao.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 
 /// 周期类型状态：'week' 表示按周展示，'month' 表示按月展示
 final periodTypeProvider = StateProvider<String>((ref) => 'week');
-
-/// 星期标签：周一到周日
-const List<String> _weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
 
 /// 统计页面 - 展示月度支出统计、消费趋势柱状图和分类明细
 class StatisticsScreen extends ConsumerWidget {
@@ -132,8 +130,8 @@ class _PeriodButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 当前周期模式
     final periodType = ref.watch(periodTypeProvider);
-    // 按钮文字显示当前模式
-    final label = periodType == 'week' ? '周' : '月';
+    // 按钮显示点击后的目标模式（而非当前模式）
+    final label = periodType == 'week' ? '月' : '周';
     return GestureDetector(
       onTap: () {
         // 周/月模式切换
@@ -228,8 +226,8 @@ class _OverviewCard extends ConsumerWidget {
   /// 构建月度环比变化文字
   Widget _buildCompareText(
     BuildContext context,
-    AsyncValue currentAsync,
-    AsyncValue prevAsync,
+    AsyncValue<MonthlySummary> currentAsync,
+    AsyncValue<MonthlySummary> prevAsync,
   ) {
     // 两个数据源均加载完成后才计算环比
     final current = currentAsync.asData?.value;
@@ -259,17 +257,20 @@ class _OverviewCard extends ConsumerWidget {
   }
 }
 
-/// 消费趋势图表卡片（radius 18），支持周/月两种粒度
+/// 消费趋势图表卡片（radius 18），支持周/年两种粒度
+/// - 周模式：展示选中月份内各周的支出汇总
+/// - 月模式：展示选中年份 1-12 月的每月支出趋势
 class _ChartCard extends ConsumerWidget {
   final DateTime month;
   const _ChartCard({required this.month});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 当前周期模式
     final period = ref.watch(periodTypeProvider);
-    // 指定月份的每日支出数据流
+    // 周模式：每日消费数据；月模式：年度每月消费数据
     final dailyAsync = ref.watch(dailyTotalsProvider(month));
+    final yearlyAsync = ref.watch(yearlyMonthlyTotalsProvider(month.year));
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -283,7 +284,7 @@ class _ChartCard extends ConsumerWidget {
         children: [
           // 卡片标题，根据周期显示不同文字
           Text(
-            period == 'week' ? '本周消费趋势' : '本月消费趋势',
+            period == 'week' ? '本月各周消费趋势' : '年度消费趋势',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -291,67 +292,99 @@ class _ChartCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          dailyAsync.when(
-            data: (dailyTotals) {
-              // 构建 day→total 映射
-              final totalMap = {for (var d in dailyTotals) d.day: d.total};
-              // 根据周期模式生成柱状图数据和标签
-              final chartData = _buildChartData(totalMap, period, month);
-              return Column(
-                children: [
-                  // 柱状图
-                  _BarChart(values: chartData.values),
-                  const SizedBox(height: 6),
-                  // 底部日期标签行
-                  _DateLabels(labels: chartData.labels),
-                ],
-              );
-            },
-            loading: () => const SizedBox(
-              height: 130,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-            error: (_, _) => const SizedBox(
-              height: 130,
-              child: Center(child: Text('暂无数据')),
-            ),
-          ),
+          // 根据周期模式显示不同的图表
+          if (period == 'week')
+            _buildWeeklyChart(context, dailyAsync)
+          else
+            _buildYearlyChart(context, yearlyAsync),
         ],
       ),
     );
   }
 
-  /// 根据周/月模式构建图表数据，返回柱状图数值列表和对应的标签列表
-  _ChartData _buildChartData(
-    Map<int, double> totalMap, String period, DateTime month,
+  /// 构建周趋势图表（选中月份内各周支出汇总柱状图）
+  Widget _buildWeeklyChart(
+    BuildContext context,
+    AsyncValue<List<DailyTotal>> dailyAsync,
   ) {
-    if (period == 'week') {
-      // 周模式：获取本周一到周日的 7 天数据
-      final now = DateTime.now();
-      final monday = now.subtract(Duration(days: now.weekday - 1));
-      final values = <double>[];
-      final labels = <String>[];
-      for (var i = 0; i < 7; i++) {
-        final day = monday.add(Duration(days: i));
-        // 仅当月范围内的天数显示有效数据，其余标记为 -1（不可见）
-        if (day.month == month.month && day.year == month.year) {
-          values.add(totalMap[day.day] ?? 0);
-        } else {
-          values.add(-1);
-        }
-        labels.add(_weekdayLabels[i]);
+    return dailyAsync.when(
+      data: (dailyTotals) {
+        // 构建 day→total 映射
+        final totalMap = {for (var d in dailyTotals) d.day: d.total};
+        // 生成周柱状图数据和标签
+        final chartData = _buildWeekChartData(totalMap, month);
+        return Column(
+          children: [
+            _BarChart(values: chartData.values),
+            const SizedBox(height: 6),
+            _DateLabels(labels: chartData.labels),
+          ],
+        );
+      },
+      loading: () => const SizedBox(
+        height: 130,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, _) => const SizedBox(
+        height: 130,
+        child: Center(child: Text('暂无数据')),
+      ),
+    );
+  }
+
+  /// 构建年度趋势图表（1-12月每月支出柱状图）
+  Widget _buildYearlyChart(
+    BuildContext context,
+    AsyncValue<List<MonthlyTotal>> yearlyAsync,
+  ) {
+    return yearlyAsync.when(
+      data: (monthlyTotals) {
+        // 提取每月支出数值和月份标签
+        final values = monthlyTotals.map((m) => m.total).toList();
+        final labels = monthlyTotals.map((m) => '${m.month}月').toList();
+        return Column(
+          children: [
+            _BarChart(values: values),
+            const SizedBox(height: 6),
+            _DateLabels(labels: labels),
+          ],
+        );
+      },
+      loading: () => const SizedBox(
+        height: 130,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, _) => const SizedBox(
+        height: 130,
+        child: Center(child: Text('暂无数据')),
+      ),
+    );
+  }
+
+  /// 将选中月份的每日支出按周分组（第1周1-7日，第2周8-14日...），生成各周汇总柱状图
+  _ChartData _buildWeekChartData(Map<int, double> totalMap, DateTime month) {
+    // 获取当月总天数
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    // 按月内第几周分组，每7天为一组
+    const weekSize = 7;
+    final numWeeks = (lastDay / weekSize).ceil(); // 4 或 5 周
+
+    final values = <double>[];
+    final labels = <String>[];
+    for (var w = 0; w < numWeeks; w++) {
+      final startDay = w * weekSize + 1;
+      final endDay = (w + 1) * weekSize;
+      final actualEndDay = endDay > lastDay ? lastDay : endDay;
+
+      // 累加该周范围内的每日支出
+      double weekTotal = 0;
+      for (var d = startDay; d <= actualEndDay; d++) {
+        weekTotal += totalMap[d] ?? 0;
       }
-      return _ChartData(values: values, labels: labels);
-    } else {
-      // 月模式：显示当月全部天数
-      final lastDay = DateTime(month.year, month.month + 1, 0).day;
-      final values = List.generate(lastDay, (i) {
-        final day = i + 1;
-        return totalMap[day] ?? 0;
-      });
-      final labels = List.generate(lastDay, (i) => '${i + 1}日');
-      return _ChartData(values: values, labels: labels);
+      values.add(weekTotal);
+      labels.add('第${w + 1}周');
     }
+    return _ChartData(values: values, labels: labels);
   }
 }
 

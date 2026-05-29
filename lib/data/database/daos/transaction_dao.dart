@@ -88,7 +88,7 @@ class TransactionDao {
     final end = DateTime(year, month + 1, 1);
     return _db.customSelect(
       '''
-      SELECT CAST(strftime('%d', date) AS INTEGER) as day,
+      SELECT CAST(strftime('%d', date / 1000, 'unixepoch') AS INTEGER) as day,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
       WHERE date >= ? AND date < ? AND type = 'expense'
@@ -123,6 +123,33 @@ class TransactionDao {
         categoryId: row.read<int>('category_id'),
         total: row.read<double>('total'),
       )).toList();
+    });
+  }
+
+  /// 获取指定年份 1-12 月每月的支出汇总（响应式）
+  Stream<List<MonthlyTotal>> watchYearlyMonthlyTotals(int year) {
+    final start = DateTime(year, 1, 1);
+    final end = DateTime(year + 1, 1, 1);
+    return _db.customSelect(
+      '''
+      SELECT CAST(strftime('%m', date / 1000, 'unixepoch') AS INTEGER) as month,
+             COALESCE(SUM(amount), 0) as total
+      FROM transactions_table
+      WHERE date >= ? AND date < ? AND type = 'expense'
+      GROUP BY month
+      ORDER BY month
+      ''',
+      variables: [Variable(start), Variable(end)],
+    ).watch().map((rows) {
+      // 建立当月实际有数据月份的映射
+      final monthMap = {
+        for (var row in rows) row.read<int>('month'): row.read<double>('total'),
+      };
+      // 填充全部12个月，无数据的月份补0
+      return List.generate(12, (i) => MonthlyTotal(
+        month: i + 1,
+        total: monthMap[i + 1] ?? 0,
+      ));
     });
   }
 
@@ -166,4 +193,11 @@ class CategoryRanking {
   final int categoryId;
   final double total;
   CategoryRanking({required this.categoryId, required this.total});
+}
+
+/// 年度每月支出汇总数据
+class MonthlyTotal {
+  final int month;
+  final double total;
+  MonthlyTotal({required this.month, required this.total});
 }

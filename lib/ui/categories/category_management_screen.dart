@@ -42,7 +42,7 @@ class _CategoryManagementScreenState
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
+                  color: AppTheme.textOnSurface(context).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -68,7 +68,7 @@ class _CategoryManagementScreenState
                 icon: const Icon(PhosphorIconsLight.pencil),
                 label: const Text('编辑分类'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.glassWhite1f,
+                  backgroundColor: AppTheme.glassFillStrong(context),
                   foregroundColor: AppTheme.textOnSurface(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -354,7 +354,11 @@ class _TypeToggle extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
+            color: isActive
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : const Color(0xFF1A1A1A))
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -364,7 +368,9 @@ class _TypeToggle extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: isActive
-                  ? const Color(0xFF1A1A1A)
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A1A)
+                      : Colors.white)
                   : AppTheme.textOnSurface(context).withValues(alpha: 0.6),
             ),
           ),

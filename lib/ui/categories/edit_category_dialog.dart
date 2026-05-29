@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 class EditCategoryDialog extends StatefulWidget {
   final String type;
@@ -59,9 +60,8 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入分类名称')),
-      );
+      TopNotification.show(context,
+          message: '请输入分类名称', type: TopNotificationType.warning);
       return;
     }
     Navigator.of(context).pop({

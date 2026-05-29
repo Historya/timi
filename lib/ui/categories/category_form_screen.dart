@@ -7,6 +7,7 @@ import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 /// 分类添加/编辑表单页面
 ///
@@ -74,9 +75,8 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   Future<void> _save() async {
     // 校验名称不能为空
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入分类名称')),
-      );
+      TopNotification.show(context,
+          message: '请输入分类名称', type: TopNotificationType.warning);
       return;
     }
 
@@ -267,7 +267,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.white : Colors.transparent,
+                    color: isActive
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : const Color(0xFF1A1A1A))
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -278,10 +282,14 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                       fontWeight: FontWeight.bold,
                       color: isEditMode
                           ? (isActive
-                              ? const Color(0xFF1A1A1A)
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF1A1A1A)
+                                  : Colors.white)
                               : AppTheme.textOnSurface(context).withValues(alpha: 0.3))
                           : (isActive
-                              ? const Color(0xFF1A1A1A)
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF1A1A1A)
+                                  : Colors.white)
                               : AppTheme.textOnSurface(context).withValues(alpha: 0.6)),
                     ),
                   ),

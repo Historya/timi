@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -167,13 +168,9 @@ class AboutScreen extends StatelessWidget {
       height: 52,
       child: GestureDetector(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$title（待实现）'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: AppTheme.glassWhite26,
-            ),
-          );
+          TopNotification.show(context,
+              message: '$title（待实现）',
+              type: TopNotificationType.info);
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
