@@ -14,7 +14,8 @@ import 'package:timi/ui/about/about_screen.dart';
 import 'package:timi/ui/shared/widgets/scaffold_with_nav_bar.dart';
 
 /// 根导航器 Key，用于 push 路由跳转到全屏页面
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+/// 根导航器 Key，暴露给外部组件（如 BudgetAlertWatcher）用于访问 Overlay
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 /// GoRouter 配置
 ///
@@ -22,7 +23,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(de
 /// 标签页路由统一由 '/' 承载，内部通过 currentTabIndexProvider 切换。
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [
       // 根路由：渲染带底部导航栏的页面框架
@@ -33,61 +34,61 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 以下为全屏 push 路由，使用根导航器
       GoRoute(
         path: '/add-transaction',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const AddTransactionScreen(),
       ),
       GoRoute(
         path: '/voice-input',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const VoiceInputScreen(),
       ),
       GoRoute(
         path: '/detail/:id',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => BillDetailScreen(
           id: int.parse(state.pathParameters['id']!),
         ),
       ),
       GoRoute(
         path: '/categories',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const CategoryManagementScreen(),
       ),
       GoRoute(
         path: '/categories/add',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const CategoryFormScreen(),
       ),
       GoRoute(
         path: '/categories/edit/:id',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => CategoryFormScreen(
           id: int.parse(state.pathParameters['id']!),
         ),
       ),
       GoRoute(
         path: '/search',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
         path: '/settings',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/budget',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const BudgetScreen(),
       ),
       GoRoute(
         path: '/export',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const DataExportScreen(),
       ),
       GoRoute(
         path: '/about',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const AboutScreen(),
       ),
     ],

@@ -56,7 +56,7 @@ class BillDetailScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   '加载失败：$e',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  style: TextStyle(color: AppTheme.textOnSurface(context).withValues(alpha: 0.7), fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -115,17 +115,17 @@ class BillDetailScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).scaffoldBackgroundColor,
-        title: const Text('删除交易', style: TextStyle(color: Colors.white)),
-        content: const Text(
+        title: Text('删除交易', style: TextStyle(color: AppTheme.textOnSurface(context))),
+        content: Text(
           '确定要删除这笔交易吗？',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: AppTheme.textOnSurface(context).withValues(alpha: 0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               '取消',
-              style: TextStyle(color: Colors.white54),
+              style: TextStyle(color: AppTheme.textOnSurface(context).withValues(alpha: 0.54)),
             ),
           ),
           TextButton(
@@ -279,8 +279,6 @@ class _DetailCard extends StatelessWidget {
       decoration: AppTheme.glassDecorationFull(
         context: context,
         radius: 20,
-        fill: AppTheme.glassWhite1f,
-        stroke: AppTheme.glassStroke33,
       ),
       child: Column(
         children: [

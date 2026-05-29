@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 class DataExportScreen extends ConsumerStatefulWidget {
   const DataExportScreen({super.key});
@@ -341,12 +342,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   void _showExportSuccess() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('导出成功'),
-        backgroundColor: AppTheme.accentGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    TopNotification.show(context,
+        message: '导出成功', type: TopNotificationType.success);
   }
 }

@@ -9,6 +9,7 @@ import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 
 /// 添加交易页面主组件
@@ -46,22 +47,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Future<void> _save() async {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入金额')));
+      TopNotification.show(context,
+          message: '请输入金额', type: TopNotificationType.warning);
       return;
     }
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请输入有效金额')));
+      TopNotification.show(context,
+          message: '请输入有效金额', type: TopNotificationType.warning);
       return;
     }
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请选择分类')));
+      TopNotification.show(context,
+          message: '请选择分类', type: TopNotificationType.warning);
       return;
     }
 
@@ -81,7 +79,50 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ),
     );
 
+    // 支出类型时查询当月预算剩余额度并弹出通知
+    if (_type == 'expense' && mounted) {
+      await _showBudgetRemainingNotification();
+    }
+
     if (mounted) context.pop();
+  }
+
+  /// 查询当月预算剩余额度，通过顶部通知弹窗展示
+  Future<void> _showBudgetRemainingNotification() async {
+    final budgetDao = ref.read(budgetDaoProvider);
+    final transactionDao = ref.read(transactionDaoProvider);
+
+    // 查询当月是否设置了预算
+    final budget = await budgetDao.getMonthly(
+      _selectedDate.year, _selectedDate.month,
+    );
+    if (budget == null) return; // 未设置预算，不弹出通知
+
+    // 查询当月总支出（包含刚添加的账单）
+    final totalExpense = await transactionDao.getMonthlyTotalByType(
+      _selectedDate.year, _selectedDate.month, 'expense',
+    );
+
+    // 计算预算剩余额度（负数表示超支）
+    final remaining = budget.amount - totalExpense;
+
+    if (!mounted) return;
+
+    if (remaining >= 0) {
+      // 预算还有剩余，显示绿色提醒
+      TopNotification.show(
+        context,
+        message: '本月预算剩余 ¥${remaining.toStringAsFixed(0)}',
+        type: TopNotificationType.success,
+      );
+    } else {
+      // 已超支，显示警告提醒
+      TopNotification.show(
+        context,
+        message: '本月预算已超支 ¥${(-remaining).toStringAsFixed(0)}',
+        type: TopNotificationType.warning,
+      );
+    }
   }
 
   @override
@@ -180,7 +221,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isExpense ? Colors.white : Colors.transparent,
+                  color: isExpense
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF1A1A1A))
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -190,7 +235,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: isExpense
-                        ? const Color(0xFF1A1A1A)
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : Colors.white)
                         : AppTheme.textOnSurfaceTertiary(context),
                   ),
                 ),
@@ -204,7 +251,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: !isExpense ? Colors.white : Colors.transparent,
+                  color: !isExpense
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF1A1A1A))
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -214,7 +265,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: !isExpense
-                        ? const Color(0xFF1A1A1A)
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1A1A1A)
+                            : Colors.white)
                         : AppTheme.textOnSurfaceTertiary(context),
                   ),
                 ),
