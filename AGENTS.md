@@ -9,6 +9,7 @@
 ## 项目约束
 - [工作流铁律](.opencode\rules\工作流铁律.md) 。
 - [Flutter开发规范](.opencode\rules\Flutter开发规范.md)。
+项目中使用了ui设计稿，所以在修改ui之前需要先修改设计稿，然后再做具体的实现。
 
 
 ## 关键命令

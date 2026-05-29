@@ -1,4 +1,7 @@
+// 语音输入页面 — 按住录音，松开结束，识别账目后确认添加
+
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'dart:ui' as ui;
@@ -17,25 +20,31 @@ import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/services/asr_service.dart';
 import 'package:timi/services/semantic_parser.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 /// 语音输入页面状态枚举
 enum _VoiceInputState {
-  /// 初始状态，等待用户点击录音
+  /// 初始状态，等待用户按住麦克风按钮
   idle,
 
-  /// 正在录音中
+  /// 正在录音中（用户按住按钮）
   recording,
 
   /// 停止录音后正在 AI 语义解析中
   parsing,
 
-  /// 识别完成，显示解析结果
+  /// 识别完成，显示结果及"确定添加账目"按钮
   result,
 }
 
 /// 语音输入页面 — 说话记账
 ///
-/// 全流程：录音 → 实时语音识别 → 文本解析 → 结果预览 → 确认保存
+/// 交互流程：
+/// 1. 用户按住麦克风按钮 → 开始录音，显示频率波纹动画 + 实时识别文本
+/// 2. 用户松开按钮 → 录音结束，AI 语义解析
+/// 3. 解析成功 → 显示"确定添加账目"按钮
+///
+/// 全流程：按住录音 → 实时语音识别 → 松开 → 文本解析 → 预览 → 确认保存
 class VoiceInputScreen extends ConsumerStatefulWidget {
   const VoiceInputScreen({super.key});
 
@@ -61,11 +70,15 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
   String _selectedCategoryName = '';
-  String _selectedType = 'expense'; // 交易类型：expense（支出）或 income（收入）
-  DateTime _selectedDate = DateTime.now(); // 交易日期
+  String _selectedType = 'expense';
+  DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
 
-  // 录音脉冲动画
+  /// 标记当前选中的分类是否为 AI 推荐的新分类（数据库中不存在）
+  /// 为 true 时，确认添加账目后自动创建该分类
+  bool _isNewCategory = false;
+
+  // 录音脉冲动画 — 驱动波形条动画
   late AnimationController _pulseController;
 
   @override
@@ -90,7 +103,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     super.dispose();
   }
 
-  /// 开始录音
+  // ─── 录音控制 ─────────────────────────────────
+
+  /// 按下麦克风按钮时调用 — 开始录音
   Future<void> _startRecording() async {
     debugPrint('[VoiceInput] === _startRecording ===');
 
@@ -98,7 +113,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     final hasPermission = await _recorder.hasPermission();
     debugPrint('[VoiceInput] 麦克风权限: $hasPermission');
     if (!hasPermission) {
-      _showSnackBar('需要麦克风权限才能录音');
+      if (!mounted) return;
+      TopNotification.show(context, message: '需要麦克风权限才能录音', type: TopNotificationType.warning);
       return;
     }
 
@@ -107,19 +123,20 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     debugPrint('[VoiceInput] ASR 引擎: ${asrService.runtimeType}');
     _asrService = asrService;
 
-    // 检查凭证是否已配置（根据引擎类型检查对应字段）
+    // 检查凭证是否已配置
     final settingsDao = ref.read(settingsDaoProvider);
     if (asrService.engineId == 'dashscope') {
       final apiKey = await settingsDao.get('dashscope_api_key');
       if (apiKey == null || apiKey.isEmpty) {
-        _showSnackBar('请先在设置中配置语音识别 API Key');
+        if (!mounted) return;
+        TopNotification.show(context, message: '请先在设置中配置语音识别 API Key', type: TopNotificationType.warning);
         return;
       }
       debugPrint('[VoiceInput] API Key 已配置');
     }
 
     try {
-      // 连接 ASR 服务（DashScope 需要传递 apiKey；Tencent 凭证已在构造函数中）
+      // 连接 ASR 服务
       debugPrint('[VoiceInput] 正在连接 ASR 服务...');
       if (asrService.engineId == 'dashscope') {
         final apiKey = await settingsDao.get('dashscope_api_key');
@@ -158,14 +175,17 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         (chunk) {
           chunkCount++;
           if (chunkCount <= 3 || chunkCount % 50 == 0) {
-            debugPrint('[VoiceInput] 音频块 #$chunkCount, 大小: ${chunk.length} bytes');
+            debugPrint(
+              '[VoiceInput] 音频块 #$chunkCount, 大小: ${chunk.length} bytes',
+            );
           }
           asrService.sendAudio(chunk);
         },
         onError: (error) {
           debugPrint('[VoiceInput] 音频流错误: $error');
           _stopRecording();
-          _showSnackBar('录音出错：$error');
+          if (!mounted) return;
+          TopNotification.show(context, message: '录音出错：$error', type: TopNotificationType.error);
         },
         onDone: () {
           debugPrint('[VoiceInput] 音频流结束，共发送 $chunkCount 块');
@@ -177,22 +197,27 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         _transcript = '';
       });
 
-      // 启动麦克风脉冲动画
+      // 启动波形条动画
       _pulseController.repeat(reverse: true);
       debugPrint('[VoiceInput] 录音已开始，状态=recording');
     } catch (e, stack) {
       debugPrint('[VoiceInput] ASR 连接/启动失败: $e\n$stack');
-      // 连接或启动录音失败时回退到空闲状态
       await asrService.disconnect();
       if (mounted) {
-        _showSnackBar('语音识别连接失败：$e');
+        TopNotification.show(context, message: '语音识别连接失败：$e', type: TopNotificationType.error);
       }
     }
   }
 
-  /// 停止录音
+  /// 松开麦克风按钮时调用 — 停止录音
   Future<void> _stopRecording() async {
     debugPrint('[VoiceInput] === _stopRecording ===');
+
+    // 如果不在录音状态则忽略
+    if (_state != _VoiceInputState.recording) {
+      debugPrint('[VoiceInput] 当前不在录音状态，忽略停止');
+      return;
+    }
 
     // 停止音频订阅
     debugPrint('[VoiceInput] 正在取消音频订阅...');
@@ -219,7 +244,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     _pulseController.stop();
 
-    // 立即切换到解析中状态，显示加载动画，避免 UI 假死感
+    // 立即切换到解析中状态
     setState(() {
       _state = _VoiceInputState.parsing;
     });
@@ -236,13 +261,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       // 无识别结果时回退到空闲态
       if (fullText.isEmpty) {
         debugPrint('[VoiceInput] 识别结果为空，回退到空闲态');
-        _showSnackBar('未识别到语音内容，请重试');
+        TopNotification.show(context, message: '未识别到语音内容，请重试', type: TopNotificationType.warning);
         _resetToIdle();
         return;
       }
 
       // 获取 DashScope LLM API Key 用于 AI 语义解析
-      // 与语音识别（ASR）的 API Key 相互独立，需在设置中分别配置
       final settingsDao = ref.read(settingsDaoProvider);
       String? apiKey;
       try {
@@ -262,21 +286,37 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           'category=${parsed.categoryName}, type=${parsed.type}, '
           'date=${parsed.date}, note="${parsed.note}"');
 
+      // 检查 AI 解析出的分类是否已在数据库中
+      bool categoryExists = false;
+      final parsedCategoryName = parsed.categoryName;
+      if (parsedCategoryName != null && parsedCategoryName.isNotEmpty) {
+        final existingCategories =
+            await ref.read(allCategoriesProvider.future);
+        categoryExists =
+            existingCategories.any((c) => c.name == parsedCategoryName);
+      }
+
       setState(() {
         _state = _VoiceInputState.result;
         _transcript = fullText;
         _amountController.text =
             parsed.amount?.toStringAsFixed(2) ?? '';
-        _selectedCategoryName = parsed.categoryName ?? '';
+        _selectedCategoryName = parsedCategoryName ?? '';
         _selectedType = parsed.type ?? 'expense';
         _selectedDate = parsed.effectiveDate;
         _noteController.text = parsed.note;
+        // 标记是否为 AI 推荐的新分类（数据库中不存在）
+        _isNewCategory = parsedCategoryName != null &&
+            parsedCategoryName.isNotEmpty &&
+            !categoryExists;
       });
-      debugPrint('[VoiceInput] 状态切换为 result');
+      debugPrint('[VoiceInput] 状态切换为 result, '
+          'categoryExists=$categoryExists, '
+          'isNewCategory=$_isNewCategory');
     } catch (e, stack) {
       debugPrint('[VoiceInput] 停止录音/解析出错: $e\n$stack');
       if (!mounted) return;
-      _showSnackBar('语音识别失败：$e');
+      TopNotification.show(context, message: '语音识别失败：$e', type: TopNotificationType.error);
       _resetToIdle();
     }
   }
@@ -292,6 +332,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     _selectedCategoryName = '';
     _selectedType = 'expense';
     _selectedDate = DateTime.now();
+    _isNewCategory = false;
     _pulseController.reset();
     setState(() {
       _state = _VoiceInputState.idle;
@@ -306,37 +347,55 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     final amountText = _amountController.text.trim();
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
-      _showSnackBar('请输入有效金额');
+      TopNotification.show(context, message: '请输入有效金额', type: TopNotificationType.warning);
       return;
     }
 
     if (_selectedCategoryName.isEmpty) {
-      _showSnackBar('请选择分类');
+      TopNotification.show(context, message: '请选择分类', type: TopNotificationType.warning);
       return;
     }
 
     setState(() => _isSaving = true);
 
     try {
-      // 根据分类名称查找分类 ID
-      final categories = await ref.read(allCategoriesProvider.future);
-      final selectedCategory = categories.firstWhere(
-        (c) => c.name == _selectedCategoryName,
-        orElse: () => categories.first,
-      );
-      debugPrint('[VoiceInput] 保存交易: amount=$amount, '
-          'category=${selectedCategory.name}, type=$_selectedType, '
-          'date=$_selectedDate, note=${_noteController.text}');
-
-      // 使用解析出的交易日期（如果用户未修改则保持 AI 解析结果）
       final now = DateTime.now();
       final transactionDate = _selectedDate;
+      int categoryId;
 
-      // 将交易记录写入数据库
+      if (_isNewCategory) {
+        // 新分类：自动创建分类，再创建交易
+        debugPrint('[VoiceInput] 自动创建新分类: $_selectedCategoryName');
+        final categoryDao = ref.read(categoryDaoProvider);
+        categoryId = await categoryDao.insert(CategoriesTableCompanion(
+          name: Value(_selectedCategoryName),
+          icon: const Value('dotsThree'),
+          color: const Value('#69DB7C'),
+          type: Value(_selectedType),
+          sortOrder: const Value(0),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ));
+        // 刷新分类数据源（下次进入时能立即看到新分类）
+        ref.invalidate(allCategoriesProvider);
+        debugPrint('[VoiceInput] 新分类已创建, id=$categoryId');
+      } else {
+        // 已有分类：按名称查找
+        final categories = await ref.read(allCategoriesProvider.future);
+        final selectedCategory = categories.firstWhere(
+          (c) => c.name == _selectedCategoryName,
+          orElse: () => categories.first,
+        );
+        categoryId = selectedCategory.id;
+        debugPrint('[VoiceInput] 保存交易: amount=$amount, '
+            'category=${selectedCategory.name}, type=$_selectedType, '
+            'date=$_selectedDate, note=${_noteController.text}');
+      }
+
       await ref.read(transactionDaoProvider).insert(
         TransactionsTableCompanion.insert(
           amount: amount,
-          categoryId: selectedCategory.id,
+          categoryId: categoryId,
           type: _selectedType,
           date: transactionDate,
           note: Value(_noteController.text.trim().isEmpty
@@ -349,38 +408,41 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
       if (!mounted) return;
       debugPrint('[VoiceInput] 交易保存成功');
-      _showSnackBar('记账成功');
+      TopNotification.show(context, message: '记账成功', type: TopNotificationType.success);
       context.pop();
     } catch (e, stack) {
       debugPrint('[VoiceInput] 保存失败: $e\n$stack');
       if (!mounted) return;
-      _showSnackBar('保存失败：$e');
+      TopNotification.show(context, message: '保存失败：$e', type: TopNotificationType.error);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  /// 显示提示消息
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+  // ─── Build ─────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: switch (_state) {
-            _VoiceInputState.idle => _buildIdleLayout(context),
-            _VoiceInputState.recording => _buildRecordingLayout(context),
-            _VoiceInputState.parsing => _buildParsingLayout(context),
-            _VoiceInputState.result => _buildResultLayout(context),
-          },
-        ),
+    // 语音输入页面是全屏沉浸式体验，强制使用暗色主题
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Builder(
+        builder: (darkContext) {
+          // 使用 darkContext 确保内部 AppTheme 方法返回暗色值
+          return Scaffold(
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: switch (_state) {
+                  _VoiceInputState.idle => _buildIdleLayout(darkContext),
+                  _VoiceInputState.recording => _buildRecordingLayout(darkContext),
+                  _VoiceInputState.parsing => _buildParsingLayout(darkContext),
+                  _VoiceInputState.result => _buildResultLayout(darkContext),
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -388,7 +450,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   // ─── 关闭按钮 ─────────────────────────────────
 
   /// 左上角关闭按钮，40×40 毛玻璃圆，x 图标
-  /// 录音中先停止再关闭
   Widget _buildCloseButton() {
     return Tooltip(
       message: '关闭',
@@ -422,170 +483,87 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  // ─── 语音波形中心区域 ──────────────────────────
+  // ─── 频率波纹动画 ─────────────────────────────
 
-  /// 同心圆波形 + 麦克风图标，[animated] 控制录制脉冲动画
-  Widget _buildVoiceWaveform({required bool animated}) {
-    final waveform = Stack(
-      alignment: Alignment.center,
-      children: [
-        // 外圈 180
-        Container(
-          width: 180,
-          height: 180,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0x14FFFFFF),
-              width: 1,
-            ),
-          ),
-        ),
-        // 中圈 160
-        Container(
-          width: 160,
-          height: 160,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0x1FFFFFFF),
-              width: 1.5,
-            ),
-          ),
-        ),
-        // 内圈 130
-        Container(
-          width: 130,
-          height: 130,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0x26FFFFFF),
-              width: 1.5,
-            ),
-          ),
-        ),
-        // 麦克风图标
-        const Icon(
-          PhosphorIconsLight.microphone,
-          color: Colors.white,
-          size: 48,
-        ),
-      ],
-    );
-
-    if (!animated) return waveform;
-
+  /// 频率条波形动画，根据录音状态显示不同的动画效果
+  Widget _buildWaveformAnimation({required bool animated}) {
     return AnimatedBuilder(
       animation: _pulseController,
       builder: (context, child) {
-        final scale = 1.0 + _pulseController.value * 0.1;
-        return Transform.scale(scale: scale, child: child);
+        return CustomPaint(
+          size: const Size(200, 130),
+          painter: _WaveformBarPainter(
+            // 录音中：利用脉冲值驱动条高变化产生波纹动效
+            // 空闲/结果态：静止显示低矮条
+            animationValue: animated ? _pulseController.value : 0.0,
+          ),
+        );
       },
-      child: waveform,
     );
   }
 
-  /// 语音中心区域容器（220×220 毛玻璃 + 波形 + 状态文字）
-  Widget _buildVoiceCenter({
-    required bool animated,
-    required String statusText,
-    String? subText,
-    VoidCallback? onTap,
-  }) {
+  /// 波纹动画区域容器
+  Widget _buildWaveformArea({required bool animated, required String statusText}) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // 220×220 毛玻璃容器（可点击触发录音）
-        GestureDetector(
-          onTap: onTap,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(110),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  color: const Color(0x1FFFFFFF),
-                  borderRadius: BorderRadius.circular(110),
-                  border: Border.all(
-                    color: const Color(0x40FFFFFF),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 40,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: _buildVoiceWaveform(animated: animated),
-              ),
-            ),
-          ),
+        SizedBox(
+          width: 200,
+          height: 130,
+          child: _buildWaveformAnimation(animated: animated),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         // 状态文字
         Text(
           statusText,
           style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.normal,
+            color: Color(0x99FFFFFF),
           ),
         ),
-        if (subText != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            subText,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              color: Color(0x99FFFFFF),
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  // ─── 识别结果玻璃卡片 ─────────────────────────
+  // ─── 识别文本毛玻璃卡片 ─────────────────────────
 
-  /// 识别结果卡片，[text] 为空时显示占位提示
-  Widget _buildRecognizedTextGlass({required String text, bool showLabel = false}) {
+  /// 语音识别文本展示区域，毛玻璃卡片样式
+  Widget _buildRecognitionCard({required String text, bool showLabel = false}) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
-            color: const Color(0x1AFFFFFF),
-            borderRadius: BorderRadius.circular(16),
+            color: const Color(0x0FFFFFFF),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0x26FFFFFF),
+              color: const Color(0x33FFFFFF),
               width: 1,
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '识别结果',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.5),
+              if (showLabel)
+                Text(
+                  '识别结果',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: Colors.white.withValues(alpha: 0.38),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+              if (showLabel) const SizedBox(height: 10),
               Text(
                 text.isEmpty ? '等待语音输入...' : text,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
@@ -597,214 +575,286 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  // ─── 操作按钮 ─────────────────────────────────
+  // ─── 麦克风按钮（按住录音） ─────────────────────
 
-  /// 底部操作按钮行：取消 + 确认添加
-  Widget _buildActionButtons({required bool confirmEnabled}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // 取消按钮
-        GestureDetector(
-          onTap: _state == _VoiceInputState.recording ? _stopRecording : _resetToIdle,
-          child: Container(
-            width: 120,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0x1AFFFFFF),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: const Color(0x33FFFFFF),
-                width: 1,
-              ),
-            ),
-            child: const Center(
-              child: Text(
-                '取消',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xB3FFFFFF),
+  /// 大麦克风按钮 — 用户需要按住此按钮进行录音，松开即结束
+  ///
+  /// 使用 [Listener] 而非 [GestureDetector] 监听原始指针事件，
+  /// 避免 GestureDetector 的 tap 手势仲裁超时（~500ms）导致
+  /// 长按时自动取消。
+  ///
+  /// 视觉样式根据录音状态切换：空闲态半透明，录音中加强填充。
+  Widget _buildMicButton() {
+    final isRecording = _state == _VoiceInputState.recording;
+    return Listener(
+      // 按下 → 开始录音
+      onPointerDown: (_) => _startRecording(),
+      // 松开 → 停止录音
+      onPointerUp: (_) => _stopRecording(),
+      onPointerCancel: (_) => _stopRecording(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 80×80 毛玻璃麦克风按钮
+          ClipRRect(
+            borderRadius: BorderRadius.circular(40),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  // 录音中加强填充和边框，表示按下状态
+                  color: isRecording
+                      ? const Color(0x40FFFFFF)
+                      : const Color(0x26FFFFFF),
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(
+                    color: isRecording
+                        ? const Color(0x59FFFFFF)
+                        : const Color(0x33FFFFFF),
+                    width: isRecording ? 1.5 : 1,
+                  ),
+                ),
+                child: const Icon(
+                  PhosphorIconsFill.microphone,
+                  color: Colors.white,
+                  size: 32,
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-        // 确认添加按钮
-        GestureDetector(
-          onTap: confirmEnabled && !_isSaving ? _confirmTransaction : null,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                width: 140,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0x40FFFFFF),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0x4DFFFFFF),
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          '✓ 确认添加',
+          const SizedBox(height: 12),
+          // 状态提示文字
+          Text(
+            isRecording ? '松开结束' : '按住说话',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isRecording ? FontWeight.w500 : FontWeight.normal,
+              color: isRecording
+                  ? const Color(0xB3FFFFFF)
+                  : const Color(0x80FFFFFF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── 确定添加账目按钮 ──────────────────────────
+
+  /// 确认添加账目按钮 — 用户松开按钮后，识别到账目时显示
+  Widget _buildConfirmButton() {
+    return GestureDetector(
+      onTap: _isSaving ? null : _confirmTransaction,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0x26FFFFFF),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: const Color(0x40FFFFFF),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          PhosphorIconsLight.check,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '确定添加账目',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
-                ),
-              ),
+                      ],
+                    ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  // ─── 三态布局 ─────────────────────────────────
+  // ─── 四态布局 ─────────────────────────────────
 
-  /// 初始空闲态：波形 + "点击开始录音" + 空卡片 + 禁用的确认
+  /// 初始空闲态：波纹静止 + 空识别卡片 + 麦克风按钮（"按住说话"）
   Widget _buildIdleLayout(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // 关闭按钮
         Align(
           alignment: Alignment.centerLeft,
           child: _buildCloseButton(),
         ),
-        const Spacer(),
-        _buildVoiceCenter(
-          animated: false,
-          statusText: '点击开始录音',
-          onTap: _startRecording,
-        ),
-        const SizedBox(height: 12),
-        _buildRecognizedTextGlass(text: ''),
-        const SizedBox(height: 12),
-        _buildActionButtons(confirmEnabled: false),
-        const Spacer(),
+        const Spacer(flex: 2),
+        // 波纹动画（静止）
+        _buildWaveformArea(animated: false, statusText: '准备就绪'),
+        const SizedBox(height: 16),
+        // 识别文本卡片（空）
+        _buildRecognitionCard(text: ''),
+        const Spacer(flex: 2),
+        // 麦克风按钮 — 按住录音
+        _buildMicButton(),
+        const SizedBox(height: 24),
       ],
     );
   }
 
-  /// 录音中：脉冲波形 + "正在聆听..." + 实时识别文本
+  /// 录音中：波纹动画 + 实时识别文本 + 麦克风按钮（按压态）
   Widget _buildRecordingLayout(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // 关闭按钮
         Align(
           alignment: Alignment.centerLeft,
           child: _buildCloseButton(),
         ),
-        const Spacer(),
-        _buildVoiceCenter(
-          animated: true,
-          statusText: '正在聆听...',
-          subText: '说出你的记账内容',
-          onTap: _stopRecording,
-        ),
-        const SizedBox(height: 12),
-        _buildRecognizedTextGlass(
-          text: _transcript.isEmpty ? '正在听...' : _transcript,
+        const Spacer(flex: 2),
+        // 波纹动画（动态）
+        _buildWaveformArea(animated: true, statusText: '正在聆听...'),
+        const SizedBox(height: 16),
+        // 实时识别文本
+        _buildRecognitionCard(
+          text: _transcript.isEmpty ? '聆听中...' : _transcript,
           showLabel: true,
         ),
-        const SizedBox(height: 12),
-        _buildActionButtons(confirmEnabled: false),
-        const Spacer(),
+        const Spacer(flex: 2),
+        // 麦克风按钮 — 按住录音（会自动匹配按压态样式）
+        _buildMicButton(),
+        const SizedBox(height: 24),
       ],
     );
   }
 
-  /// 解析中态：脉冲波形停止 + "正在分析..." + 识别文本 + 旋转加载指示器
-  ///
-  /// 此状态在停止录音后立即显示，避免用户在等待 AI 解析时看到静止界面产生假死感。
-  /// AI 解析完成后自动切换到 result 态或空闲态（出错时）。
+  /// 解析中态：波纹停止 + 实时文本 + 加载指示器
   Widget _buildParsingLayout(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // 左上角关闭按钮
+        // 关闭按钮
         Align(
           alignment: Alignment.centerLeft,
           child: _buildCloseButton(),
         ),
-        const Spacer(),
-        // 波形中心（无动画，不响应点击）
-        _buildVoiceCenter(
-          animated: false,
-          statusText: '正在分析...',
-          subText: 'AI 正在解析语音内容',
+        const Spacer(flex: 2),
+        // 波纹动画（停止）
+        _buildWaveformArea(animated: false, statusText: '正在分析...'),
+        const SizedBox(height: 16),
+        // 识别文本
+        _buildRecognitionCard(
+          text: _transcript.isEmpty ? '正在获取识别结果...' : _transcript,
+          showLabel: true,
         ),
-        const SizedBox(height: 24),
-        // 旋转加载指示器
+        const SizedBox(height: 16),
+        // 加载指示器
         const SizedBox(
-          width: 32,
-          height: 32,
+          width: 28,
+          height: 28,
           child: CircularProgressIndicator(
             color: Colors.white,
             strokeWidth: 2.5,
           ),
         ),
+        const Spacer(flex: 2),
+        // 占位，保持底部一致
+        const SizedBox(height: 80),
         const SizedBox(height: 24),
-        // 显示识别到的原始文本
-        _buildRecognizedTextGlass(
-          text: _transcript.isEmpty ? '正在获取识别结果...' : _transcript,
-          showLabel: true,
-        ),
-        const Spacer(),
       ],
     );
   }
 
-  /// 结果态：精简波形 + 识别文本 + 编辑表单 + 操作按钮
+  /// 结果态：最终文本 + 编辑表单 + 确认添加 + 取消按钮
+  ///
+  /// 注意：结果态不显示波纹动画（用户松开按钮后不再需要）
   Widget _buildResultLayout(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 关闭按钮（左对齐）
+          // 关闭按钮
           Align(
             alignment: Alignment.centerLeft,
             child: _buildCloseButton(),
           ),
-          const SizedBox(height: 12),
-          _buildVoiceCenter(
-            animated: false,
-            statusText: '识别完成',
-          ),
-          const SizedBox(height: 12),
-          // 识别结果
-          _buildRecognizedTextGlass(text: _transcript, showLabel: true),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+          // 最终识别文本
+          _buildRecognitionCard(text: _transcript, showLabel: true),
+          const SizedBox(height: 24),
           // 编辑表单
           _buildEditForm(context),
-          const SizedBox(height: 20),
-          // 操作按钮
-          _buildActionButtons(confirmEnabled: true),
+          const SizedBox(height: 24),
+          // 底部操作行：确认添加账目（左）+ 取消按钮（右），横向并列
+          Row(
+            children: [
+              Expanded(child: _buildConfirmButton()),
+              const SizedBox(width: 12),
+              Expanded(child: _buildCancelButton()),
+            ],
+          ),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
+  /// 取消按钮 — 点击后回到空闲态，重新显示麦克风按钮
+  ///
+  /// 与确认按钮横向并列，毛玻璃样式，视觉对称
+  Widget _buildCancelButton() {
+    return GestureDetector(
+      onTap: _resetToIdle,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0x0DFFFFFF),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0x26FFFFFF),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              '取消',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ─── 编辑表单（结果态） ────────────────────────
 
-  /// 解析结果编辑表单：金额 + 类型 + 分类 + 日期 + 备注
   Widget _buildEditForm(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -814,12 +864,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         const SizedBox(height: 8),
         _buildAmountField(context),
         const SizedBox(height: 20),
-        // 交易类型（支出/收入）
+        // 交易类型
         _buildFormLabel(context, '类型'),
         const SizedBox(height: 8),
         _buildTypeToggle(context),
         const SizedBox(height: 20),
-        // 分类选择
+        // 分类选择（含 AI 推荐新分类）
         _buildFormLabel(context, '分类'),
         const SizedBox(height: 8),
         _buildCategoryDropdown(context),
@@ -837,7 +887,17 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  /// 交易类型切换按钮（支出/收入）
+  Widget _buildFormLabel(BuildContext context, String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.textOnSurfaceSecondary(context),
+      ),
+    );
+  }
+
   Widget _buildTypeToggle(BuildContext context) {
     return Container(
       height: 48,
@@ -848,7 +908,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       ),
       child: Row(
         children: [
-          // 支出按钮
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _selectedType = 'expense'),
@@ -874,7 +933,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
               ),
             ),
           ),
-          // 收入按钮
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _selectedType = 'income'),
@@ -905,11 +963,73 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  /// 日期选择器
+  Widget _buildAmountField(BuildContext context) {
+    return TextField(
+      controller: _amountController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: AppTheme.textOnSurface(context),
+      ),
+      decoration: InputDecoration(
+        prefixText: '¥ ',
+        prefixStyle: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.textOnSurface(context),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
+        ),
+        filled: true,
+        fillColor: AppTheme.glassFillStrong(context),
+      ),
+    );
+  }
+
+  Widget _buildNoteField(BuildContext context) {
+    return TextField(
+      controller: _noteController,
+      style: TextStyle(
+        fontSize: 16,
+        color: AppTheme.textOnSurface(context),
+      ),
+      decoration: InputDecoration(
+        hintText: '添加备注...',
+        hintStyle: TextStyle(
+          color: AppTheme.textOnSurfaceTertiary(context),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
+        ),
+        filled: true,
+        fillColor: AppTheme.glassFillStrong(context),
+      ),
+    );
+  }
+
   Widget _buildDateField(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // 弹出日期选择对话框
         final picked = await showDatePicker(
           context: context,
           initialDate: _selectedDate,
@@ -962,97 +1082,19 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  /// 编辑表单标签文字
-  Widget _buildFormLabel(BuildContext context, String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.textOnSurfaceSecondary(context),
-      ),
-    );
-  }
-
-  /// 金额输入框
-  Widget _buildAmountField(BuildContext context) {
-    return TextField(
-      controller: _amountController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: AppTheme.textOnSurface(context),
-      ),
-      decoration: InputDecoration(
-        prefixText: '¥ ',
-        prefixStyle: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textOnSurface(context),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
-        ),
-        filled: true,
-        fillColor: AppTheme.glassFillStrong(context),
-      ),
-    );
-  }
-
-  /// 备注输入框
-  Widget _buildNoteField(BuildContext context) {
-    return TextField(
-      controller: _noteController,
-      style: TextStyle(
-        fontSize: 16,
-        color: AppTheme.textOnSurface(context),
-      ),
-      decoration: InputDecoration(
-        hintText: '添加备注...',
-        hintStyle: TextStyle(
-          color: AppTheme.textOnSurfaceTertiary(context),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
-        ),
-        filled: true,
-        fillColor: AppTheme.glassFillStrong(context),
-      ),
-    );
-  }
-
-  /// 分类下拉选择器，从 allCategoriesProvider 获取数据
   Widget _buildCategoryDropdown(BuildContext context) {
     final categoriesAsync = ref.watch(allCategoriesProvider);
 
     return categoriesAsync.when(
       data: (categories) {
-        // 过滤出支出分类
         final expenseCategories =
             categories.where((c) => c.type == 'expense').toList();
 
-        // 如果当前选中项不在列表中则重置
-        if (_selectedCategoryName.isNotEmpty &&
-            !expenseCategories.any((c) => c.name == _selectedCategoryName)) {
+        // 如果当前选中的是 AI 推荐新分类（数据库中不存在），
+        // 则保留选中值不变，稍后在 items 中添加该选项
+        final categoryExists = _selectedCategoryName.isNotEmpty &&
+            expenseCategories.any((c) => c.name == _selectedCategoryName);
+        if (!categoryExists && !_isNewCategory && _selectedCategoryName.isNotEmpty) {
           _selectedCategoryName = '';
         }
 
@@ -1077,30 +1119,75 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                 ),
               ),
               dropdownColor: const Color(0xFF2A2A2A),
-              items: expenseCategories.map((c) {
-                return DropdownMenuItem<String>(
-                  value: c.name,
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        color: _parseHexColor(c.color),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        c.name,
-                        style: TextStyle(
-                          color: AppTheme.textOnSurface(context),
+              items: [
+                // 如果存在 AI 推荐的新分类，作为首个选项展示
+                if (_isNewCategory && _selectedCategoryName.isNotEmpty)
+                  DropdownMenuItem<String>(
+                    value: _selectedCategoryName,
+                    enabled: true,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF69DB7C),
+                          size: 14,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          _selectedCategoryName,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0x3369DB7C),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            '推荐新分类',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF69DB7C),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              }).toList(),
+                // 已有分类列表
+                ...expenseCategories.map((c) {
+                  return DropdownMenuItem<String>(
+                    value: c.name,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.circle,
+                          color: _parseHexColor(c.color),
+                          size: 12,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          c.name,
+                          style: TextStyle(
+                            color: AppTheme.textOnSurface(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
               onChanged: (value) {
                 if (value != null) {
-                  setState(() => _selectedCategoryName = value);
+                  setState(() {
+                    _selectedCategoryName = value;
+                    // 判断用户选的是否为已有分类
+                    _isNewCategory =
+                        !expenseCategories.any((c) => c.name == value);
+                  });
                 }
               },
             ),
@@ -1120,5 +1207,60 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     final h = hex.replaceFirst('#', '');
     final full = h.length == 6 ? 'FF$h' : h;
     return Color(int.parse(full, radix: 16));
+  }
+}
+
+// ─── 频率波纹 CustomPainter ─────────────────────
+
+/// 频率响应波纹条绘制器，用于显示录音时的声音波纹动画
+///
+/// 绘制 7 条垂直条，录音中时条高随 [animationValue] 波动产生波纹效果，
+/// 空闲/静止时显示为低矮的均匀条。
+class _WaveformBarPainter extends CustomPainter {
+  final double animationValue;
+
+  _WaveformBarPainter({required this.animationValue});
+
+  // 条数
+  static const int barCount = 7;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.24)
+      ..style = PaintingStyle.fill;
+
+    // 计算每条宽度和间距，居中绘制
+    final totalBarsWidth = barCount * 10.0 + (barCount - 1) * 5.0;
+    final startX = (size.width - totalBarsWidth) / 2;
+
+    // 最大/最小条高
+    const maxBarHeight = 120.0;
+    const minBarHeight = 30.0;
+
+    for (int i = 0; i < barCount; i++) {
+      // 用正弦波驱动各条不同高度，产生流动波纹效果
+      // 每条有相位偏移，使波纹看起来从左向右传播
+      final phase = (i / barCount) * math.pi * 2;
+      // animationValue 范围 0~1，映射为 0~2π，作正弦驱动
+      final wave = (math.sin(phase + animationValue * math.pi * 2) + 1) / 2;
+      final barHeight = minBarHeight + (maxBarHeight - minBarHeight) * wave;
+
+      // 计算条的位置（底部对齐居中）
+      final x = startX + i * 15.0;
+      final y = size.height - barHeight;
+
+      // 圆角矩形
+      final rrect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, y, 10, barHeight),
+        const Radius.circular(5),
+      );
+      canvas.drawRRect(rrect, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaveformBarPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }
