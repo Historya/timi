@@ -9,6 +9,7 @@ import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/services/asr_service.dart';
 import 'package:timi/services/dashscope_asr_service.dart';
 import 'package:timi/services/tencent_asr_service.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 /// 设置页面
 class SettingsScreen extends ConsumerWidget {
@@ -29,11 +30,6 @@ class SettingsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10),
-                      const _SectionTitle('语音识别'),
-                      const SizedBox(height: 10),
-                      const _VoiceCard(),
-                      const SizedBox(height: 24),
                       const _SectionTitle('数据管理'),
                       const SizedBox(height: 10),
                       const _DataCard(),
@@ -69,7 +65,7 @@ class _SettingsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Row(
         children: [
           // 返回按钮 24px
@@ -221,45 +217,6 @@ class _ToggleSwitch extends StatelessWidget {
   }
 }
 
-/// 语音识别卡片 — 从 SettingsTable 加载引擎设置
-class _VoiceCard extends ConsumerWidget {
-  const _VoiceCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // 获取 SettingsDao 实例
-    final dao = ref.watch(settingsDaoProvider);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: AppTheme.glassDecoration(
-        fill: AppTheme.glassFillStrong(context),
-        stroke: AppTheme.glassStroke(context),
-      ),
-      child: Column(
-        children: [
-          _SettingRow(
-            icon: PhosphorIconsLight.microphone,
-            label: '离线引擎',
-            trailing: FutureBuilder<String?>(
-              future: dao.get('offline_engine'),
-              builder: (context, snapshot) => _TrailingText(snapshot.data ?? '系统引擎'),
-            ),
-          ),
-          const _Divider(),
-          _SettingRow(
-            icon: PhosphorIconsLight.cloud,
-            label: '云端引擎',
-            trailing: FutureBuilder<String?>(
-              future: dao.get('cloud_engine'),
-              builder: (context, snapshot) => _TrailingText(snapshot.data ?? '百度'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// 数据管理卡片 — 加载货币 / 分类 / 预算提醒，预算提醒可写回数据库
 class _DataCard extends ConsumerStatefulWidget {
   const _DataCard();
@@ -315,15 +272,6 @@ class _DataCardState extends ConsumerState<_DataCard> {
             trailing: FutureBuilder<String?>(
               future: dao.get('currency'),
               builder: (context, snapshot) => _TrailingText(snapshot.data ?? '人民币 ¥'),
-            ),
-          ),
-          const _Divider(),
-          _SettingRow(
-            icon: PhosphorIconsLight.folder,
-            label: '默认分类',
-            trailing: FutureBuilder<String?>(
-              future: dao.get('default_category'),
-              builder: (context, snapshot) => _TrailingText(snapshot.data ?? '餐饮'),
             ),
           ),
           const _Divider(),
@@ -590,12 +538,17 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
   Future<void> _testConnection() async {
     // 验证凭证是否已填写
     if (_engine == 'dashscope' && _dashscopeKey.isEmpty) {
-      _showSnackBar('请先配置 API Key');
+      TopNotification.show(context,
+          message: '请先配置 API Key', type: TopNotificationType.warning);
       return;
     }
     if (_engine == 'tencent') {
-      if (_tencentAppId.isEmpty || _tencentSecretId.isEmpty || _tencentSecretKey.isEmpty) {
-        _showSnackBar('请先填写完整的腾讯云 ASR 凭证');
+      if (_tencentAppId.isEmpty ||
+          _tencentSecretId.isEmpty ||
+          _tencentSecretKey.isEmpty) {
+        TopNotification.show(context,
+            message: '请先填写完整的腾讯云 ASR 凭证',
+            type: TopNotificationType.warning);
         return;
       }
     }
@@ -628,14 +581,17 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
       // 连接成功，断开后提示
       await service.disconnect();
       if (mounted) {
-        _showSnackBar('✅ 连接成功！ASR 服务可用');
+        TopNotification.show(context,
+            message: '连接成功！ASR 服务可用',
+            type: TopNotificationType.success);
         setState(() => _testStatus = 'success');
       }
     } catch (e) {
       // 连接失败，断开清理后报错
       await service.disconnect();
       if (mounted) {
-        _showSnackBar('❌ 连接失败：$e');
+        TopNotification.show(context,
+            message: '连接失败：$e', type: TopNotificationType.error);
         setState(() => _testStatus = 'failure');
       }
     } finally {
@@ -643,18 +599,6 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
         setState(() => _testing = false);
       }
     }
-  }
-
-  /// 显示 SnackBar 提示信息
-  void _showSnackBar(String message) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
   }
 
   @override
@@ -1166,12 +1110,22 @@ class _DisplayCard extends ConsumerWidget {
             icon: PhosphorIconsLight.moon,
             label: '深色模式',
             trailing: _ToggleSwitch(
-              value: themeMode == ThemeMode.dark,
+              // 判断当前是否实际处于深色模式（考虑跟随系统的情况）
+              value: switch (themeMode) {
+                ThemeMode.dark => true,
+                ThemeMode.light => false,
+                ThemeMode.system =>
+                  MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+              },
               onChanged: () {
-                // 切换暗色/浅色主题
-                ref.read(themeModeProvider.notifier).update(
-                  (state) => state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
-                );
+                // 循环切换：跟随系统 → 深色 → 浅色 → 跟随系统
+                ref.read(themeModeProvider.notifier).update((state) {
+                  return switch (state) {
+                    ThemeMode.system => ThemeMode.dark,
+                    ThemeMode.dark => ThemeMode.light,
+                    ThemeMode.light => ThemeMode.system,
+                  };
+                });
               },
             ),
           ),

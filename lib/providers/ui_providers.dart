@@ -57,7 +57,8 @@ final allCategoriesProvider = StreamProvider.autoDispose<List<CategoriesTableDat
 });
 
 /// 当前主题模式（暗色/浅色）
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
+/// 当前主题模式（system=跟随系统, dark=深色, light=浅色）
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
 /// 当前选中的标签页索引（0=首页, 1=账单, 2=统计, 3=我的）
 final currentTabIndexProvider = StateProvider<int>((ref) => 0);
@@ -72,6 +73,12 @@ final monthlyStatsProvider = StreamProvider.autoDispose
 final dailyTotalsProvider = StreamProvider.autoDispose
     .family<List<DailyTotal>, DateTime>((ref, month) {
   return ref.watch(transactionDaoProvider).watchDailyTotals(month.year, month.month);
+});
+
+/// 指定年份 1-12 月每月支出汇总（用于年度趋势图）
+final yearlyMonthlyTotalsProvider = StreamProvider.autoDispose
+    .family<List<MonthlyTotal>, int>((ref, year) {
+  return ref.watch(transactionDaoProvider).watchYearlyMonthlyTotals(year);
 });
 
 /// 指定月份指定类型的分类排名（含 categoryId 和 total）
@@ -105,13 +112,16 @@ final monthlyBudgetProvider = FutureProvider.autoDispose
   ).first;
   final rankingMap = {for (var r in rankings) r.categoryId: r.total};
 
-  double totalSpent = 0;
+  // 获取当月全量总支出（包含所有分类，而非仅设有预算的分类）
+  final totalSpent = await transactionDao.getMonthlyTotalByType(
+    param.year, param.month, 'expense',
+  );
+
   final categorySpending = <CategoryBudgetWithSpending>[];
   for (final cb in categoryBudgets) {
     final category = categoryMap[cb.categoryId];
     if (category == null) continue;
     final actualSpent = rankingMap[cb.categoryId] ?? 0;
-    totalSpent += actualSpent;
     categorySpending.add(CategoryBudgetWithSpending(
       category: category,
       budgetAmount: cb.amount,
