@@ -20,7 +20,7 @@ class AppTheme {
   static const Color glassStroke40 = Color(0x40FFFFFF);
 
   // 浅色主题表面颜色
-  static const Color surfaceLight = Color(0xFFF5F5F7);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color glassBlack0f = Color(0x0F000000);
   static const Color glassBlack14 = Color(0x14000000);
   static const Color glassBlack1a = Color(0x1A000000);
