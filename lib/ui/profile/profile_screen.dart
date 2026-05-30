@@ -92,7 +92,7 @@ class _UserInfoRow extends ConsumerWidget {
     return FutureBuilder<String?>(
       future: ref.read(settingsDaoProvider).get('nickname'),
       builder: (context, snapshot) {
-        final nickname = snapshot.data ?? '用户昵称';
+        final nickname = snapshot.data ?? 'Tom';
         return Row(
           children: [
             // 用户头像：80×80 圆形毛玻璃背景，白色用户图标
@@ -107,10 +107,19 @@ class _UserInfoRow extends ConsumerWidget {
                   width: 2,
                 ),
               ),
-              child: Icon(
-                PhosphorIconsLight.user,
-                color: AppTheme.textOnSurface(context),
-                size: 44,
+              // child: Icon(
+              //   PhosphorIconsLight.user,
+              //   color: AppTheme.textOnSurface(context),
+              //   size: 44,
+              // ),
+              child: CircleAvatar(
+                radius: 40,
+                foregroundImage: AssetImage('assets/avatar.png'),
+                child: Icon(
+                  PhosphorIconsLight.user,
+                  color: AppTheme.textOnSurface(context),
+                  size: 44,
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -131,7 +140,9 @@ class _UserInfoRow extends ConsumerWidget {
                   '设置你的个人资料',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.textOnSurface(context).withValues(alpha: 0.5),
+                    color: AppTheme.textOnSurface(
+                      context,
+                    ).withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -156,28 +167,20 @@ class _StatsCard extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassDecorationFull(
-        context: context,
-        radius: 20,
-      ),
+      decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: statsAsync.when(
         // 加载成功显示真实数据
         data: (stats) => _buildStatsRow(
-          expense: '¥${NumberFormat('#,###').format(stats.totalExpense.round())}',
+          expense:
+              '¥${NumberFormat('#,###').format(stats.totalExpense.round())}',
           income: '¥${NumberFormat('#,###').format(stats.totalIncome.round())}',
           count: '${stats.totalCount}笔',
         ),
         // 加载中或出错时显示占位符
-        loading: () => _buildStatsRow(
-          expense: '---',
-          income: '---',
-          count: '---',
-        ),
-        error: (_, _) => _buildStatsRow(
-          expense: '---',
-          income: '---',
-          count: '---',
-        ),
+        loading: () =>
+            _buildStatsRow(expense: '---', income: '---', count: '---'),
+        error: (_, _) =>
+            _buildStatsRow(expense: '---', income: '---', count: '---'),
       ),
     );
   }
@@ -219,10 +222,7 @@ class _StatItem extends StatelessWidget {
   final String value;
   final String label;
 
-  const _StatItem({
-    required this.value,
-    required this.label,
-  });
+  const _StatItem({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +375,11 @@ class _MenuRow extends StatelessWidget {
                 color: iconBgColor,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Icon(icon, color: AppTheme.textOnSurface(context), size: 20),
+              child: Icon(
+                icon,
+                color: AppTheme.textOnSurface(context),
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             // 功能名称文字

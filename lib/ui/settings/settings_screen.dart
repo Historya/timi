@@ -71,7 +71,11 @@ class _SettingsHeader extends StatelessWidget {
           // 返回按钮 24px
           GestureDetector(
             onTap: () => context.pop(),
-            child: Icon(PhosphorIconsLight.arrowLeft, color: AppTheme.textOnSurface(context), size: 24),
+            child: Icon(
+              PhosphorIconsLight.arrowLeft,
+              color: AppTheme.textOnSurface(context),
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           // 标题 "设置" 20px bold 居中
@@ -79,7 +83,11 @@ class _SettingsHeader extends StatelessWidget {
             child: Text(
               '设置',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textOnSurface(context)),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textOnSurface(context),
+              ),
             ),
           ),
           // 右侧 24px 占位 spacer
@@ -93,6 +101,7 @@ class _SettingsHeader extends StatelessWidget {
 /// 分节标题：13px 60% 透明度 粗体
 class _SectionTitle extends StatelessWidget {
   final String label;
+
   const _SectionTitle(this.label);
 
   @override
@@ -132,7 +141,10 @@ class _SettingRow extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               label,
-              style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppTheme.textOnSurface(context),
+              ),
             ),
             const Spacer(),
             trailing,
@@ -160,6 +172,7 @@ class _Divider extends StatelessWidget {
 /// 尾部文字 14px 50% + caretRight 18px
 class _TrailingText extends StatelessWidget {
   final String text;
+
   const _TrailingText(this.text);
 
   @override
@@ -171,12 +184,19 @@ class _TrailingText extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: TextStyle(fontSize: 14, color: AppTheme.textOnSurfaceTertiary(context)),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textOnSurfaceTertiary(context),
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 4),
-        Icon(PhosphorIconsLight.caretRight, color: AppTheme.textOnSurface(context).withValues(alpha: 0.38), size: 18),
+        Icon(
+          PhosphorIconsLight.caretRight,
+          color: AppTheme.textOnSurface(context).withValues(alpha: 0.38),
+          size: 18,
+        ),
       ],
     );
   }
@@ -271,7 +291,8 @@ class _DataCardState extends ConsumerState<_DataCard> {
             label: '默认货币',
             trailing: FutureBuilder<String?>(
               future: dao.get('currency'),
-              builder: (context, snapshot) => _TrailingText(snapshot.data ?? '人民币 ¥'),
+              builder: (context, snapshot) =>
+                  _TrailingText(snapshot.data ?? '人民币 ¥'),
             ),
           ),
           const _Divider(),
@@ -386,7 +407,10 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                       children: [
                         // 默认引擎标识
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.accentGreen.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
@@ -401,8 +425,11 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(PhosphorIconsFill.checkCircle,
-                            color: AppTheme.accentGreen, size: 22),
+                        Icon(
+                          PhosphorIconsFill.checkCircle,
+                          color: AppTheme.accentGreen,
+                          size: 22,
+                        ),
                       ],
                     )
                   : null,
@@ -434,7 +461,10 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                       children: [
                         // 默认引擎标识
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.accentGreen.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
@@ -449,8 +479,11 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(PhosphorIconsFill.checkCircle,
-                            color: AppTheme.accentGreen, size: 22),
+                        Icon(
+                          PhosphorIconsFill.checkCircle,
+                          color: AppTheme.accentGreen,
+                          size: 22,
+                        ),
                       ],
                     )
                   : null,
@@ -497,17 +530,27 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
           decoration: InputDecoration(
             hintText: hintText,
             border: const OutlineInputBorder(),
+            // 显式指定聚焦边框颜色，避免浅色主题下 primary=白色导致边框不可见
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: AppTheme.accentBlue, width: 2.0),
+            ),
           ),
           style: TextStyle(color: AppTheme.textOnSurface(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('取消'),
+            child: Text(
+              '取消',
+              style: TextStyle(color: AppTheme.textOnSurface(context)),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('确认'),
+            child: Text(
+              '确认',
+              style: TextStyle(color: AppTheme.textOnSurface(context)),
+            ),
           ),
         ],
       ),
@@ -538,17 +581,22 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
   Future<void> _testConnection() async {
     // 验证凭证是否已填写
     if (_engine == 'dashscope' && _dashscopeKey.isEmpty) {
-      TopNotification.show(context,
-          message: '请先配置 API Key', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请先配置 API Key',
+        type: TopNotificationType.warning,
+      );
       return;
     }
     if (_engine == 'tencent') {
       if (_tencentAppId.isEmpty ||
           _tencentSecretId.isEmpty ||
           _tencentSecretKey.isEmpty) {
-        TopNotification.show(context,
-            message: '请先填写完整的腾讯云 ASR 凭证',
-            type: TopNotificationType.warning);
+        TopNotification.show(
+          context,
+          message: '请先填写完整的腾讯云 ASR 凭证',
+          type: TopNotificationType.warning,
+        );
         return;
       }
     }
@@ -581,17 +629,22 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
       // 连接成功，断开后提示
       await service.disconnect();
       if (mounted) {
-        TopNotification.show(context,
-            message: '连接成功！ASR 服务可用',
-            type: TopNotificationType.success);
+        TopNotification.show(
+          context,
+          message: '连接成功！ASR 服务可用',
+          type: TopNotificationType.success,
+        );
         setState(() => _testStatus = 'success');
       }
     } catch (e) {
       // 连接失败，断开清理后报错
       await service.disconnect();
       if (mounted) {
-        TopNotification.show(context,
-            message: '连接失败：$e', type: TopNotificationType.error);
+        TopNotification.show(
+          context,
+          message: '连接失败：$e',
+          type: TopNotificationType.error,
+        );
         setState(() => _testStatus = 'failure');
       }
     } finally {
@@ -624,9 +677,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
         fill: AppTheme.glassFillStrong(context),
         stroke: AppTheme.glassStroke(context),
       ),
-      child: Column(
-        children: _buildConfigRows(),
-      ),
+      child: Column(children: _buildConfigRows()),
     );
   }
 
@@ -643,17 +694,26 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Icon(PhosphorIconsLight.microphone,
-                    color: AppTheme.textOnSurface(context), size: 22),
+                Icon(
+                  PhosphorIconsLight.microphone,
+                  color: AppTheme.textOnSurface(context),
+                  size: 22,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   '语音识别引擎',
-                  style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textOnSurface(context),
+                  ),
                 ),
                 const Spacer(),
                 // 默认引擎标识徽标
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.accentGreen.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -670,7 +730,9 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                 const SizedBox(width: 8),
                 // 用 Flexible 包裹尾部，防止徽标+引擎名称+箭头溢出
                 Flexible(
-                  child: _TrailingText(_engine == 'tencent' ? '腾讯云 ASR' : '阿里云 DashScope'),
+                  child: _TrailingText(
+                    _engine == 'tencent' ? '腾讯云 ASR' : '阿里云 DashScope',
+                  ),
                 ),
               ],
             ),
@@ -696,12 +758,18 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(PhosphorIconsLight.identificationBadge,
-                      color: AppTheme.textOnSurface(context), size: 22),
+                  Icon(
+                    PhosphorIconsLight.identificationBadge,
+                    color: AppTheme.textOnSurface(context),
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Text(
                     'APP ID',
-                    style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.textOnSurface(context),
+                    ),
                   ),
                   const Spacer(),
                   _TrailingText(_maskKey(_tencentAppId)),
@@ -726,12 +794,18 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(PhosphorIconsLight.key,
-                      color: AppTheme.textOnSurface(context), size: 22),
+                  Icon(
+                    PhosphorIconsLight.key,
+                    color: AppTheme.textOnSurface(context),
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Text(
                     'SecretId',
-                    style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.textOnSurface(context),
+                    ),
                   ),
                   const Spacer(),
                   _TrailingText(_maskKey(_tencentSecretId)),
@@ -756,12 +830,18 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(PhosphorIconsLight.lock,
-                      color: AppTheme.textOnSurface(context), size: 22),
+                  Icon(
+                    PhosphorIconsLight.lock,
+                    color: AppTheme.textOnSurface(context),
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Text(
                     'SecretKey',
-                    style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.textOnSurface(context),
+                    ),
                   ),
                   const Spacer(),
                   _TrailingText(_maskKey(_tencentSecretKey)),
@@ -788,12 +868,18 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(PhosphorIconsLight.key,
-                      color: AppTheme.textOnSurface(context), size: 22),
+                  Icon(
+                    PhosphorIconsLight.key,
+                    color: AppTheme.textOnSurface(context),
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Text(
                     'API Key',
-                    style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.textOnSurface(context),
+                    ),
                   ),
                   const Spacer(),
                   _TrailingText(_maskKey(_dashscopeKey)),
@@ -862,7 +948,9 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppTheme.textOnSurface(context).withValues(alpha: 0.5),
+                    color: AppTheme.textOnSurface(
+                      context,
+                    ).withValues(alpha: 0.5),
                   ),
                 )
               else
@@ -870,7 +958,10 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                 GestureDetector(
                   onTap: _testConnection,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -1033,12 +1124,18 @@ class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Icon(PhosphorIconsLight.key,
-                        color: AppTheme.textOnSurface(context), size: 22),
+                    Icon(
+                      PhosphorIconsLight.key,
+                      color: AppTheme.textOnSurface(context),
+                      size: 22,
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       'API Key',
-                      style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: AppTheme.textOnSurface(context),
+                      ),
                     ),
                     const Spacer(),
                     _TrailingText(
@@ -1073,12 +1170,18 @@ class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            Icon(PhosphorIconsLight.magicWand,
-                color: AppTheme.textOnSurface(context), size: 22),
+            Icon(
+              PhosphorIconsLight.magicWand,
+              color: AppTheme.textOnSurface(context),
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Text(
               '分析引擎',
-              style: TextStyle(fontSize: 15, color: AppTheme.textOnSurface(context)),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppTheme.textOnSurface(context),
+              ),
             ),
             const Spacer(),
             _TrailingText(_engine == 'dashscope' ? '阿里云 DashScope' : '未知'),
@@ -1135,7 +1238,8 @@ class _DisplayCard extends ConsumerWidget {
             label: '语言',
             trailing: FutureBuilder<String?>(
               future: dao.get('language'),
-              builder: (context, snapshot) => _TrailingText(snapshot.data ?? '简体中文'),
+              builder: (context, snapshot) =>
+                  _TrailingText(snapshot.data ?? '简体中文'),
             ),
           ),
         ],

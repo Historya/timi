@@ -2,7 +2,7 @@ name: timi
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -73,22 +73,39 @@ dev_dependencies:
   drift_dev: ^2.25.1
   build_runner: ^2.4.15
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.2.19
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/icon/icon.png
+    - assets/launch_image.png
+    - assets/avatar.png
+
+# 配置 flutter_launcher_icons 用于生成 iOS/Android 应用图标
+flutter_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  adaptive_icon_background: "#FFFFFF"
+
+# 配置 flutter_native_splash 用于生成启动图（开屏）
+flutter_native_splash:
+  color: "#ffffff" # 背景色（和 background_image 二选一）
+  image: "assets/launch_image.png" # 全屏背景图
+  fullscreen: true # 全屏（隐藏状态栏）
+  android: true
+  ios: true
+  web: false
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

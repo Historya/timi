@@ -118,11 +118,10 @@ class AppTheme {
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.white,
-      cardColor: Colors.white,
       primaryColor: accentBlue,
       colorScheme: ColorScheme.light(
-        primary: Colors.white,
-        secondary: Colors.white,
+        primary: accentBlue,
+        secondary: accentBlue,
         surface: Colors.white,
         onSurface: Colors.black,
       ),
