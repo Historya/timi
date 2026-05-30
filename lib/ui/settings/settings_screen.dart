@@ -198,7 +198,7 @@ class _ToggleSwitch extends StatelessWidget {
         height: 24,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: value ? AppTheme.accentGreen : AppTheme.glassFillAccent(context),
+          color: value ? AppTheme.accentGreen : AppTheme.glassBlack26,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 3),
         child: Align(

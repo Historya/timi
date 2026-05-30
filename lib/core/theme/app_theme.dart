@@ -21,6 +21,9 @@ class AppTheme {
 
   // 浅色主题表面颜色
   static const Color surfaceLight = Color(0xFFFFFFFF);
+
+  /// 浅色主题背景颜色（浅灰色，与白色卡片形成对比）
+  static const Color surfaceLightBg = Color(0xFFF5F5F5);
   static const Color glassBlack0f = Color(0x0F000000);
   static const Color glassBlack14 = Color(0x14000000);
   static const Color glassBlack1a = Color(0x1A000000);
@@ -40,10 +43,10 @@ class AppTheme {
   static const Color textSecondary = Color(0xB3FFFFFF);
   static const Color textTertiary = Color(0x80FFFFFF);
 
-  /// 根据当前主题返回表面文字颜色
+  /// 根据当前主题返回表面文字颜色（浅色主题下为黑色）
   static Color textOnSurface(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? Colors.white : const Color(0xFF1A1A1A);
+    return isDark ? Colors.white : Colors.black;
   }
 
   /// 表面次要文字颜色（70% 透明度）
@@ -59,7 +62,7 @@ class AppTheme {
   /// 毛玻璃填充色（最浅层）
   static Color glassFill(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? glassWhite1f : glassBlack0f;
+    return isDark ? glassWhite1f : surfaceLight;
   }
 
   /// 毛玻璃描边色
@@ -71,13 +74,20 @@ class AppTheme {
   /// 毛玻璃填充色（中等层）
   static Color glassFillStrong(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? glassWhite1a : glassBlack14;
+    return isDark ? glassWhite1a : surfaceLight;
   }
 
   /// 毛玻璃填充色（最深层）
   static Color glassFillAccent(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? glassWhite40 : glassBlack26;
+    return isDark ? glassWhite40 : surfaceLight;
+  }
+  
+
+    /// 毛玻璃填充色（最深层）
+  static Color glassFillNavBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? glassWhite40 : glassBlack0f;
   }
 
   /// 根据主题返回合适的阴影颜色
@@ -85,8 +95,8 @@ class AppTheme {
   static Color glassShadowColor(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark
-        ? Colors.black.withValues(alpha: 0.3)   // 暗色：半透明黑色阴影
-        : Colors.black.withValues(alpha: 0.08);  // 浅色：极淡阴影避免脏污感
+        ? Colors.black.withValues(alpha: 0.3) // 暗色：半透明黑色阴影
+        : Colors.black.withValues(alpha: 0.08); // 浅色：极淡阴影避免脏污感
   }
 
   static ThemeData get darkTheme {
@@ -107,12 +117,14 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: surfaceLight,
+      scaffoldBackgroundColor: Colors.white,
+      cardColor: Colors.white,
+      primaryColor: accentBlue,
       colorScheme: ColorScheme.light(
-        primary: const Color(0xFF1A1A1A),
-        secondary: glassBlack40,
+        primary: Colors.white,
+        secondary: Colors.white,
         surface: Colors.white,
-        onSurface: const Color(0xFF1A1A1A),
+        onSurface: Colors.black,
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       useMaterial3: true,
@@ -134,7 +146,8 @@ class AppTheme {
       color: fill ?? (context != null ? glassFill(context) : glassWhite1f),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: stroke ?? (context != null ? glassStroke(context) : glassStroke33),
+        color:
+            stroke ?? (context != null ? glassStroke(context) : glassStroke33),
         width: strokeWidth,
       ),
     );
@@ -156,18 +169,21 @@ class AppTheme {
       color: fill ?? (context != null ? glassFill(context) : glassWhite1f),
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: stroke ?? (context != null ? glassStroke(context) : glassStroke33),
+        color:
+            stroke ?? (context != null ? glassStroke(context) : glassStroke33),
         width: strokeWidth,
       ),
-      boxShadow: shadows ?? [
-        BoxShadow(
-          color: context != null
-              ? glassShadowColor(context)
-              : Colors.black.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ],
+      boxShadow:
+          shadows ??
+          [
+            BoxShadow(
+              color: context != null
+                  ? glassShadowColor(context)
+                  : Colors.black.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
     );
   }
 }

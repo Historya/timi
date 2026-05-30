@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io' show WebSocket;
 import 'dart:math';
 import 'dart:typed_data';
@@ -126,7 +127,7 @@ class TencentAsrService implements AsrService {
       RegExp(r'secretid=[^&]+'),
       'secretid=${secretId.substring(0, 8)}***',
     );
-    print('[TencentASR] URL: $maskedUrl');
+    developer.log('[TencentASR] URL: $maskedUrl', name: 'TencentASR');
     return wsUrl;
   }
   // ============================================================
@@ -166,14 +167,14 @@ class TencentAsrService implements AsrService {
       _channel!.stream.listen(
         _handleMessage,
         onError: (error) {
-          print('[TencentASR] 错误: $error');
+          developer.log('[TencentASR] 错误: $error', name: 'TencentASR');
           _stateController.add(AsrConnectionState.error);
           if (!_completer.isCompleted) {
             _completer.completeError(error);
           }
         },
         onDone: () {
-          print('[TencentASR] 连接关闭');
+          developer.log('[TencentASR] 连接关闭', name: 'TencentASR');
           _isConnected = false;
           _stateController.add(AsrConnectionState.disconnected);
           if (!_completer.isCompleted) {
@@ -194,7 +195,7 @@ class TencentAsrService implements AsrService {
   /// - 结束：{"final":1}
   /// - 错误：{"code":4001,"message":"描述"}
   void _handleMessage(dynamic message) {
-    print("asr message: ${message}");
+    developer.log('asr message: $message', name: 'TencentASR');
     // 忽略二进制消息
     if (message is! String) return;
     try {
@@ -203,7 +204,7 @@ class TencentAsrService implements AsrService {
       final code = data['code'] as int?;
       if (code != null && code != 0) {
         final errMsg = data['message'] as String? ?? 'ASR 错误码: $code';
-        print('[TencentASR] 服务端错误: $errMsg');
+        developer.log('[TencentASR] 服务端错误: $errMsg', name: 'TencentASR');
         _stateController.add(AsrConnectionState.error);
         if (!_completer.isCompleted) {
           _completer.completeError(Exception(errMsg));
