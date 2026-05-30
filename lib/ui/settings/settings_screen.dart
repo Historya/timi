@@ -285,6 +285,7 @@ class _DataCardState extends ConsumerState<_DataCard> {
         stroke: AppTheme.glassStroke(context),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SettingRow(
             icon: PhosphorIconsLight.currencyCircleDollar,
@@ -677,7 +678,10 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
         fill: AppTheme.glassFillStrong(context),
         stroke: AppTheme.glassStroke(context),
       ),
-      child: Column(children: _buildConfigRows()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _buildConfigRows(),
+      ),
     );
   }
 
@@ -1111,6 +1115,7 @@ class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
         stroke: AppTheme.glassStroke(context),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 引擎名称行（仅展示，当前仅 DashScope 一个引擎）
           _buildEngineRow(context),
@@ -1208,6 +1213,7 @@ class _DisplayCard extends ConsumerWidget {
         stroke: AppTheme.glassStroke(context),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SettingRow(
             icon: PhosphorIconsLight.moon,

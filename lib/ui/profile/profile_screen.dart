@@ -135,16 +135,6 @@ class _UserInfoRow extends ConsumerWidget {
                     color: AppTheme.textOnSurface(context),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '设置你的个人资料',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textOnSurface(
-                      context,
-                    ).withValues(alpha: 0.5),
-                  ),
-                ),
               ],
             ),
           ],

@@ -17,10 +17,16 @@ class _TabConfig {
   const _TabConfig(this.icon, this.activeIcon, this.label);
 }
 
-/// 自定义底部导航栏（毛玻璃药丸样式）
+/// 平板布局最小宽度阈值（Material Design medium 断点）
+const double _tabletBreakpoint = 600;
+
+/// 响应式导航框架（手机底部悬浮导航 / 平板左侧导航栏）
 ///
-/// 使用 IndexedStack + Riverpod 管理标签切换，
-/// 代替原有的 GoRouter StatefulShellRoute 方案。
+/// 根据屏幕宽度自动切换布局：
+/// - 宽度 < 600dp：当前底部悬浮药丸导航
+/// - 宽度 >= 600dp：左侧 NavigationRail 导航（平板/大屏适配）
+///
+/// 使用 IndexedStack + Riverpod 管理标签切换。
 class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key});
 
@@ -38,9 +44,19 @@ class ScaffoldWithNavBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 从 Riverpod 读取当前选中的标签索引
     final currentIndex = ref.watch(currentTabIndexProvider);
-    // 检测当前是否为暗色模式，用于浅色模式下调整导航栏样式
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // 根据屏幕宽度选择布局
+    if (screenWidth >= _tabletBreakpoint) {
+      return _buildTabletLayout(context, ref, currentIndex);
+    } else {
+      return _buildPhoneLayout(context, ref, currentIndex);
+    }
+  }
+
+  /// 手机布局：底部悬浮毛玻璃药丸导航
+  Widget _buildPhoneLayout(BuildContext context, WidgetRef ref, int currentIndex) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     // 计算悬浮导航的宽度与底部间距
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -48,7 +64,6 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final double navBottom = MediaQuery.of(context).padding.bottom + 16;
 
     return Scaffold(
-      // 使用 Stack 将悬浮导航叠加在内容之上，保持各标签页状态不丢失
       body: Stack(
         children: [
           IndexedStack(
@@ -69,12 +84,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 width: navWidth,
                 height: 62,
                 decoration: BoxDecoration(
-                  // 浅色模式使用白色毛玻璃，暗色模式保持原有毛玻璃效果
                   color: isDark
                       ? AppTheme.glassFillStrong(context)
                       : Colors.white.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(31),
-                  // 浅色模式使用更淡的描边，暗色模式保持原有描边颜色
                   border: Border.all(
                     color: isDark
                         ? AppTheme.glassStroke(context)
@@ -96,10 +109,13 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     final isActive = i == currentIndex;
                     return Expanded(
                       child: GestureDetector(
-                        onTap: () => ref.read(currentTabIndexProvider.notifier).state = i,
+                        onTap: () =>
+                            ref.read(currentTabIndexProvider.notifier).state = i,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isActive ? AppTheme.glassFillNavBar(context) : Colors.transparent,
+                            color: isActive
+                                ? AppTheme.glassFillNavBar(context)
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(26),
                           ),
                           child: Column(
@@ -131,6 +147,74 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   }),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 平板布局：左侧 NavigationRail + 右侧内容
+  Widget _buildTabletLayout(BuildContext context, WidgetRef ref, int currentIndex) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    // 内容区域的左侧内边距，为导航栏留出空间
+    final double railWidth = 100;
+
+    return Scaffold(
+      body: Row(
+        children: [
+          // 左侧导航栏
+          NavigationRail(
+            selectedIndex: currentIndex,
+            onDestinationSelected: (i) =>
+                ref.read(currentTabIndexProvider.notifier).state = i,
+            labelType: NavigationRailLabelType.all,
+            minExtendedWidth: railWidth,
+            backgroundColor: Colors.transparent,
+            indicatorColor: isDark
+                ? AppTheme.glassFillNavBar(context)
+                : Colors.black.withValues(alpha: 0.08),
+            leading: Padding(
+              padding: const EdgeInsets.only(top: 32, bottom: 16),
+              child: Icon(
+                PhosphorIconsLight.coin,
+                size: 32,
+                color: AppTheme.textOnSurface(context),
+              ),
+            ),
+            // 导航项配置
+            destinations: _tabs.map((tab) {
+              return NavigationRailDestination(
+                icon: Icon(
+                  tab.icon,
+                  color: AppTheme.textOnSurfaceTertiary(context),
+                ),
+                selectedIcon: Icon(
+                  tab.activeIcon,
+                  color: AppTheme.textOnSurface(context),
+                ),
+                label: Text(
+                  tab.label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: AppTheme.textOnSurfaceSecondary(context),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          // 右侧内容区域，带毛玻璃分隔线
+          // const VerticalDivider(width: 1, thickness: 1),
+          Expanded(
+            child: IndexedStack(
+              index: currentIndex,
+              children: const [
+                HomeScreen(),
+                BillsScreen(),
+                StatisticsScreen(),
+                ProfileScreen(),
+              ],
             ),
           ),
         ],

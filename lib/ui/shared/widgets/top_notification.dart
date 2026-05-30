@@ -130,10 +130,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -1.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
 
@@ -183,7 +180,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                   ),
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   decoration: BoxDecoration(
-                    color: const Color(0xCC1A1A1A),
+                    color: AppTheme.glassFillStrong(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: AppTheme.glassStroke(context),
@@ -224,8 +221,9 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.textOnSurface(context)
-                                  .withValues(alpha: 0.8),
+                              color: AppTheme.textOnSurface(
+                                context,
+                              ).withValues(alpha: 0.8),
                             ),
                           ),
                         ),
@@ -243,8 +241,9 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                               alignment: Alignment.center,
                               child: Icon(
                                 Icons.close,
-                                color: AppTheme.textOnSurface(context)
-                                    .withValues(alpha: 0.6),
+                                color: AppTheme.textOnSurface(
+                                  context,
+                                ).withValues(alpha: 0.6),
                                 size: 14,
                               ),
                             ),
