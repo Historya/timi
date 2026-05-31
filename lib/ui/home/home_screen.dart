@@ -34,18 +34,16 @@ class HomeScreen extends ConsumerWidget {
     // 获取当前选中的月份
     final currentMonth = ref.watch(currentMonthProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // 暗色主题下使用浅色状态栏
-      value: SystemUiOverlayStyle.light,
+      // 根据主题亮度适配状态栏样式
+      value: Theme.of(context).brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: SafeArea(
-        child: Stack(
+        child: Column(
+          // 主体内容：页头 + 可滚动列表
           children: [
-            // 主体内容：页头 + 可滚动列表
-            Column(
-              children: [
-                const _Header(),
-                Expanded(child: _Content(month: currentMonth)),
-              ],
-            ),
+            const _Header(),
+            Expanded(child: _Content(month: currentMonth)),
           ],
         ),
       ),
@@ -163,21 +161,15 @@ class _Content extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(
-                child: Text('交易数据加载失败: $err'),
-              ),
+              error: (err, _) => Center(child: Text('交易数据加载失败: $err')),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(
-            child: Text('统计数据加载失败: $err'),
-          ),
+          error: (err, _) => Center(child: Text('统计数据加载失败: $err')),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Text('分类数据加载失败: $err'),
-      ),
+      error: (err, _) => Center(child: Text('分类数据加载失败: $err')),
     );
   }
 }
@@ -295,14 +287,16 @@ class _QuickActions extends StatelessWidget {
             icon: PhosphorIconsLight.plus,
             iconColor: AppTheme.textOnSurface(context),
             label: '支出',
-            onTap: () => context.push('/add-transaction'),
+            onTap: () =>
+                context.push('/add-transaction', extra: {'type': 'expense'}),
           ),
           const SizedBox(width: 12),
           _QuickAction(
             icon: PhosphorIconsLight.arrowDown,
             iconColor: AppTheme.accentGreen,
             label: '收入',
-            onTap: () => context.push('/add-transaction'),
+            onTap: () =>
+                context.push('/add-transaction', extra: {'type': 'income'}),
           ),
           const SizedBox(width: 12),
           _QuickAction(
@@ -457,10 +451,7 @@ class _TransactionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
-      decoration: AppTheme.glassDecoration(
-        radius: 16,
-        context: context,
-      ),
+      decoration: AppTheme.glassDecoration(radius: 16, context: context),
       child: Column(
         children: transactions.asMap().entries.map((entry) {
           final idx = entry.key;

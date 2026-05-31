@@ -60,24 +60,29 @@ class TransactionDao {
   }
 
   /// 按月统计汇总：总收入、总支出、总笔数（响应式）
+  ///
+  /// 基于标准 [select] 查询的 [watch]，确保 drift 能正确追踪 transactions_table 变更，
+  /// 避免 customSelect 可能存在的表依赖追踪不完整问题。
   Stream<MonthlySummary> watchMonthlySummary(int year, int month) {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
-    return _db.customSelect(
-      '''
-      SELECT 
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense,
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
-        COUNT(*) as total_count
-      FROM transactions_table
-      WHERE date >= ? AND date < ?
-      ''',
-      variables: [Variable(start), Variable(end)],
-    ).watchSingle().map((row) {
+    return (_db.select(_db.transactionsTable)
+      ..where((t) => t.date.isBetween(Variable(start), Variable(end)))
+    ).watch().map((transactions) {
+      // 在 Dart 侧计算汇总，而非 SQL 聚合
+      double totalExpense = 0;
+      double totalIncome = 0;
+      for (final t in transactions) {
+        if (t.type == 'expense') {
+          totalExpense += t.amount;
+        } else {
+          totalIncome += t.amount;
+        }
+      }
       return MonthlySummary(
-        totalExpense: row.read<double>('total_expense'),
-        totalIncome: row.read<double>('total_income'),
-        totalCount: row.read<int>('total_count'),
+        totalExpense: totalExpense,
+        totalIncome: totalIncome,
+        totalCount: transactions.length,
       );
     });
   }

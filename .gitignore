@@ -52,6 +52,9 @@ app.*.map.json
 # ai code
 .opencode
 data/memory.db
+data/memory.db
+data/memory.db-shm
+data/memory.db-wal
 data/sessions.db
 data/sessions.db-shm
 data/sessions.db-wal

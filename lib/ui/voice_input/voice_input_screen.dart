@@ -3,17 +3,15 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
-
 import 'dart:ui' as ui;
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:record/record.dart';
-import 'package:drift/drift.dart' show Value;
-
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/database_provider.dart';
@@ -111,10 +109,13 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     // 检查麦克风权限
     final hasPermission = await _recorder.hasPermission();
-    debugPrint('[VoiceInput] 麦克风权限: $hasPermission');
     if (!hasPermission) {
       if (!mounted) return;
-      TopNotification.show(context, message: '需要麦克风权限才能录音', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '需要麦克风权限才能录音',
+        type: TopNotificationType.warning,
+      );
       return;
     }
 
@@ -123,43 +124,37 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     debugPrint('[VoiceInput] ASR 引擎: ${asrService.runtimeType}');
     _asrService = asrService;
 
-    // 检查凭证是否已配置
-    final settingsDao = ref.read(settingsDaoProvider);
+    // 检查并获取 API Key（只读取一次数据库）
+    String? apiKey;
     if (asrService.engineId == 'dashscope') {
-      final apiKey = await settingsDao.get('dashscope_api_key');
+      final settingsDao = ref.read(settingsDaoProvider);
+      apiKey = await settingsDao.get('dashscope_api_key');
       if (apiKey == null || apiKey.isEmpty) {
         if (!mounted) return;
-        TopNotification.show(context, message: '请先在设置中配置语音识别 API Key', type: TopNotificationType.warning);
+        TopNotification.show(
+          context,
+          message: '请先在设置中配置语音识别 API Key',
+          type: TopNotificationType.warning,
+        );
         return;
       }
-      debugPrint('[VoiceInput] API Key 已配置');
     }
 
     try {
       // 连接 ASR 服务
-      debugPrint('[VoiceInput] 正在连接 ASR 服务...');
-      if (asrService.engineId == 'dashscope') {
-        final apiKey = await settingsDao.get('dashscope_api_key');
-        await asrService.connect(apiKey: apiKey ?? '', model: '');
-      } else {
-        await asrService.connect(apiKey: '', model: '');
-      }
+      await asrService.connect(apiKey: apiKey ?? '', model: '');
       debugPrint('[VoiceInput] ASR 连接成功');
 
       // 监听实时识别文本
-      _transcriptSubscription = asrService.transcriptStream.listen(
-        (text) {
-          debugPrint('[VoiceInput] 收到实时识别文本: "$text"');
-          if (mounted) {
-            setState(() {
-              _transcript = text;
-            });
-          }
-        },
-      );
+      _transcriptSubscription = asrService.transcriptStream.listen((text) {
+        if (mounted) {
+          setState(() {
+            _transcript = text;
+          });
+        }
+      });
 
       // 开始录音，以 PCM 16kHz 16bit 单声道格式录制
-      debugPrint('[VoiceInput] 正在启动麦克风...');
       final audioStream = await _recorder.startStream(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
@@ -174,18 +169,17 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       _audioSubscription = audioStream.listen(
         (chunk) {
           chunkCount++;
-          if (chunkCount <= 3 || chunkCount % 50 == 0) {
-            debugPrint(
-              '[VoiceInput] 音频块 #$chunkCount, 大小: ${chunk.length} bytes',
-            );
-          }
           asrService.sendAudio(chunk);
         },
         onError: (error) {
           debugPrint('[VoiceInput] 音频流错误: $error');
           _stopRecording();
           if (!mounted) return;
-          TopNotification.show(context, message: '录音出错：$error', type: TopNotificationType.error);
+          TopNotification.show(
+            context,
+            message: '录音出错：$error',
+            type: TopNotificationType.error,
+          );
         },
         onDone: () {
           debugPrint('[VoiceInput] 音频流结束，共发送 $chunkCount 块');
@@ -204,7 +198,11 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       debugPrint('[VoiceInput] ASR 连接/启动失败: $e\n$stack');
       await asrService.disconnect();
       if (mounted) {
-        TopNotification.show(context, message: '语音识别连接失败：$e', type: TopNotificationType.error);
+        TopNotification.show(
+          context,
+          message: '语音识别连接失败：$e',
+          type: TopNotificationType.error,
+        );
       }
     }
   }
@@ -214,22 +212,15 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     debugPrint('[VoiceInput] === _stopRecording ===');
 
     // 如果不在录音状态则忽略
-    if (_state != _VoiceInputState.recording) {
-      debugPrint('[VoiceInput] 当前不在录音状态，忽略停止');
-      return;
-    }
+    if (_state != _VoiceInputState.recording) return;
 
     // 停止音频订阅
-    debugPrint('[VoiceInput] 正在取消音频订阅...');
     await _audioSubscription?.cancel();
     _audioSubscription = null;
-    debugPrint('[VoiceInput] 音频订阅已取消');
 
     // 停止底层录音器
-    debugPrint('[VoiceInput] 正在停止录音器...');
     try {
       await _recorder.stop();
-      debugPrint('[VoiceInput] 录音器已停止');
     } catch (e) {
       debugPrint('[VoiceInput] 停止录音器出错: $e');
     }
@@ -251,7 +242,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     try {
       // 获取最终识别文本
-      debugPrint('[VoiceInput] 正在向 ASR 请求最终结果...');
       final fullText = await asrService.stop();
       debugPrint('[VoiceInput] ASR 返回原始文本: "$fullText"');
       await asrService.disconnect();
@@ -260,8 +250,11 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
       // 无识别结果时回退到空闲态
       if (fullText.isEmpty) {
-        debugPrint('[VoiceInput] 识别结果为空，回退到空闲态');
-        TopNotification.show(context, message: '未识别到语音内容，请重试', type: TopNotificationType.warning);
+        TopNotification.show(
+          context,
+          message: '未识别到语音内容，请重试',
+          type: TopNotificationType.warning,
+        );
         _resetToIdle();
         return;
       }
@@ -274,7 +267,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       } catch (_) {}
 
       // 获取 AI 语义解析引擎实例
-      final parserService = await ref.read(currentSemanticParserProvider.future);
+      final parserService = await ref.read(
+        currentSemanticParserProvider.future,
+      );
 
       // 使用 AI 语义解析（自动降级到规则引擎）
       final parser = HybridExpenseParser(
@@ -282,48 +277,55 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         apiKey: apiKey,
       );
       final parsed = await parser.parse(text: fullText);
-      debugPrint('[VoiceInput] 解析结果: amount=${parsed.amount}, '
-          'category=${parsed.categoryName}, type=${parsed.type}, '
-          'date=${parsed.date}, note="${parsed.note}"');
+      debugPrint(
+        '[VoiceInput] 解析结果: amount=${parsed.amount}, '
+        'category=${parsed.categoryName}, type=${parsed.type}, '
+        'date=${parsed.date}, note="${parsed.note}"',
+      );
 
       // 检查 AI 解析出的分类是否已在数据库中
       bool categoryExists = false;
       final parsedCategoryName = parsed.categoryName;
       if (parsedCategoryName != null && parsedCategoryName.isNotEmpty) {
-        final existingCategories =
-            await ref.read(allCategoriesProvider.future);
-        categoryExists =
-            existingCategories.any((c) => c.name == parsedCategoryName);
+        final existingCategories = await ref.read(allCategoriesProvider.future);
+        categoryExists = existingCategories.any(
+          (c) => c.name == parsedCategoryName,
+        );
       }
 
       setState(() {
         _state = _VoiceInputState.result;
         _transcript = fullText;
-        _amountController.text =
-            parsed.amount?.toStringAsFixed(2) ?? '';
+        _amountController.text = parsed.amount?.toStringAsFixed(2) ?? '';
         _selectedCategoryName = parsedCategoryName ?? '';
         _selectedType = parsed.type ?? 'expense';
         _selectedDate = parsed.effectiveDate;
         _noteController.text = parsed.note;
         // 标记是否为 AI 推荐的新分类（数据库中不存在）
-        _isNewCategory = parsedCategoryName != null &&
+        _isNewCategory =
+            parsedCategoryName != null &&
             parsedCategoryName.isNotEmpty &&
             !categoryExists;
       });
-      debugPrint('[VoiceInput] 状态切换为 result, '
-          'categoryExists=$categoryExists, '
-          'isNewCategory=$_isNewCategory');
+      debugPrint(
+        '[VoiceInput] 状态切换为 result, '
+        'categoryExists=$categoryExists, '
+        'isNewCategory=$_isNewCategory',
+      );
     } catch (e, stack) {
       debugPrint('[VoiceInput] 停止录音/解析出错: $e\n$stack');
       if (!mounted) return;
-      TopNotification.show(context, message: '语音识别失败：$e', type: TopNotificationType.error);
+      TopNotification.show(
+        context,
+        message: '语音识别失败：$e',
+        type: TopNotificationType.error,
+      );
       _resetToIdle();
     }
   }
 
   /// 重置到初始状态
   void _resetToIdle() {
-    debugPrint('[VoiceInput] _resetToIdle');
     _asrService?.disconnect();
     _asrService = null;
     _transcript = '';
@@ -341,18 +343,25 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 确认创建交易记录
   Future<void> _confirmTransaction() async {
-    debugPrint('[VoiceInput] _confirmTransaction');
     if (_isSaving) return;
 
     final amountText = _amountController.text.trim();
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
-      TopNotification.show(context, message: '请输入有效金额', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请输入有效金额',
+        type: TopNotificationType.warning,
+      );
       return;
     }
 
     if (_selectedCategoryName.isEmpty) {
-      TopNotification.show(context, message: '请选择分类', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请选择分类',
+        type: TopNotificationType.warning,
+      );
       return;
     }
 
@@ -367,15 +376,17 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         // 新分类：自动创建分类，再创建交易
         debugPrint('[VoiceInput] 自动创建新分类: $_selectedCategoryName');
         final categoryDao = ref.read(categoryDaoProvider);
-        categoryId = await categoryDao.insert(CategoriesTableCompanion(
-          name: Value(_selectedCategoryName),
-          icon: const Value('dotsThree'),
-          color: const Value('#69DB7C'),
-          type: Value(_selectedType),
-          sortOrder: const Value(0),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        categoryId = await categoryDao.insert(
+          CategoriesTableCompanion(
+            name: Value(_selectedCategoryName),
+            icon: const Value('dotsThree'),
+            color: const Value('#69DB7C'),
+            type: Value(_selectedType),
+            sortOrder: const Value(0),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
         // 刷新分类数据源（下次进入时能立即看到新分类）
         ref.invalidate(allCategoriesProvider);
         debugPrint('[VoiceInput] 新分类已创建, id=$categoryId');
@@ -387,33 +398,47 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           orElse: () => categories.first,
         );
         categoryId = selectedCategory.id;
-        debugPrint('[VoiceInput] 保存交易: amount=$amount, '
-            'category=${selectedCategory.name}, type=$_selectedType, '
-            'date=$_selectedDate, note=${_noteController.text}');
+        debugPrint(
+          '[VoiceInput] 保存交易: amount=$amount, '
+          'category=${selectedCategory.name}, type=$_selectedType, '
+          'date=$_selectedDate, note=${_noteController.text}',
+        );
       }
 
-      await ref.read(transactionDaoProvider).insert(
-        TransactionsTableCompanion.insert(
-          amount: amount,
-          categoryId: categoryId,
-          type: _selectedType,
-          date: transactionDate,
-          note: Value(_noteController.text.trim().isEmpty
-              ? null
-              : _noteController.text.trim()),
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
+      await ref
+          .read(transactionDaoProvider)
+          .insert(
+            TransactionsTableCompanion.insert(
+              amount: amount,
+              categoryId: categoryId,
+              type: _selectedType,
+              date: transactionDate,
+              note: Value(
+                _noteController.text.trim().isEmpty
+                    ? null
+                    : _noteController.text.trim(),
+              ),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
 
       if (!mounted) return;
       debugPrint('[VoiceInput] 交易保存成功');
-      TopNotification.show(context, message: '记账成功', type: TopNotificationType.success);
+      TopNotification.show(
+        context,
+        message: '记账成功',
+        type: TopNotificationType.success,
+      );
       context.pop();
     } catch (e, stack) {
       debugPrint('[VoiceInput] 保存失败: $e\n$stack');
       if (!mounted) return;
-      TopNotification.show(context, message: '保存失败：$e', type: TopNotificationType.error);
+      TopNotification.show(
+        context,
+        message: '保存失败：$e',
+        type: TopNotificationType.error,
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -423,26 +448,36 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 语音输入页面是全屏沉浸式体验，强制使用暗色主题
-    return Theme(
-      data: AppTheme.darkTheme,
-      child: Builder(
-        builder: (darkContext) {
-          // 使用 darkContext 确保内部 AppTheme 方法返回暗色值
-          return Scaffold(
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: switch (_state) {
-                  _VoiceInputState.idle => _buildIdleLayout(darkContext),
-                  _VoiceInputState.recording => _buildRecordingLayout(darkContext),
-                  _VoiceInputState.parsing => _buildParsingLayout(darkContext),
-                  _VoiceInputState.result => _buildResultLayout(darkContext),
-                },
+    // 语音输入页面跟随当前主题
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // 关闭按钮
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildCloseButton(),
               ),
-            ),
-          );
-        },
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 600),
+                    child: switch (_state) {
+                      _VoiceInputState.idle => _buildIdleLayout(context),
+                      _VoiceInputState.recording => _buildRecordingLayout(
+                        context,
+                      ),
+                      _VoiceInputState.parsing => _buildParsingLayout(context),
+                      _VoiceInputState.result => _buildResultLayout(context),
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -467,13 +502,13 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
             child: Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: Color(0x26FFFFFF),
+              decoration: BoxDecoration(
+                color: AppTheme.glassFillStrong(context).withValues(alpha: 0.6),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 PhosphorIconsLight.x,
-                color: Colors.white,
+                color: AppTheme.textOnSurface(context),
                 size: 20,
               ),
             ),
@@ -487,6 +522,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 频率条波形动画，根据录音状态显示不同的动画效果
   Widget _buildWaveformAnimation({required bool animated}) {
+    // 波形条颜色跟随当前主题
+    final barColor = AppTheme.textOnSurface(context).withValues(alpha: 0.24);
     return AnimatedBuilder(
       animation: _pulseController,
       builder: (context, child) {
@@ -496,6 +533,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
             // 录音中：利用脉冲值驱动条高变化产生波纹动效
             // 空闲/结果态：静止显示低矮条
             animationValue: animated ? _pulseController.value : 0.0,
+            barColor: barColor,
           ),
         );
       },
@@ -503,7 +541,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   }
 
   /// 波纹动画区域容器
-  Widget _buildWaveformArea({required bool animated, required String statusText}) {
+  Widget _buildWaveformArea({
+    required bool animated,
+    required String statusText,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -516,10 +557,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         // 状态文字
         Text(
           statusText,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.normal,
-            color: Color(0x99FFFFFF),
+            color: AppTheme.textOnSurfaceTertiary(context),
           ),
         ),
       ],
@@ -538,12 +579,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
-            color: const Color(0x0FFFFFFF),
+            color: AppTheme.glassFill(context),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0x33FFFFFF),
-              width: 1,
-            ),
+            border: Border.all(color: AppTheme.glassStroke(context), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -555,7 +593,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
-                    color: Colors.white.withValues(alpha: 0.38),
+                    color: AppTheme.textOnSurface(
+                      context,
+                    ).withValues(alpha: 0.38),
                   ),
                 ),
               if (showLabel) const SizedBox(height: 10),
@@ -565,7 +605,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppTheme.textOnSurface(context),
                 ),
               ),
             ],
@@ -606,19 +646,19 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                 decoration: BoxDecoration(
                   // 录音中加强填充和边框，表示按下状态
                   color: isRecording
-                      ? const Color(0x40FFFFFF)
-                      : const Color(0x26FFFFFF),
+                      ? AppTheme.glassFillAccent(context)
+                      : AppTheme.glassFillStrong(context),
                   borderRadius: BorderRadius.circular(40),
                   border: Border.all(
                     color: isRecording
-                        ? const Color(0x59FFFFFF)
-                        : const Color(0x33FFFFFF),
+                        ? AppTheme.glassStroke(context).withValues(alpha: 0.8)
+                        : AppTheme.glassStroke(context),
                     width: isRecording ? 1.5 : 1,
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   PhosphorIconsFill.microphone,
-                  color: Colors.white,
+                  color: AppTheme.textOnSurface(context),
                   size: 32,
                 ),
               ),
@@ -632,8 +672,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
               fontSize: 13,
               fontWeight: isRecording ? FontWeight.w500 : FontWeight.normal,
               color: isRecording
-                  ? const Color(0xB3FFFFFF)
-                  : const Color(0x80FFFFFF),
+                  ? AppTheme.textOnSurfaceSecondary(context)
+                  : AppTheme.textOnSurfaceTertiary(context),
             ),
           ),
         ],
@@ -655,38 +695,38 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              color: const Color(0x26FFFFFF),
+              color: AppTheme.glassFillStrong(context),
               borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: const Color(0x40FFFFFF),
+                color: AppTheme.glassStroke(context),
                 width: 1,
               ),
             ),
             child: Center(
               child: _isSaving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: AppTheme.textOnSurface(context),
                         strokeWidth: 2,
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           PhosphorIconsLight.check,
-                          color: Colors.white,
+                          color: AppTheme.textOnSurface(context),
                           size: 20,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           '确定添加账目',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppTheme.textOnSurface(context),
                           ),
                         ),
                       ],
@@ -704,11 +744,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   Widget _buildIdleLayout(BuildContext context) {
     return Column(
       children: [
-        // 关闭按钮
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _buildCloseButton(),
-        ),
         const Spacer(flex: 2),
         // 波纹动画（静止）
         _buildWaveformArea(animated: false, statusText: '准备就绪'),
@@ -727,11 +762,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   Widget _buildRecordingLayout(BuildContext context) {
     return Column(
       children: [
-        // 关闭按钮
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _buildCloseButton(),
-        ),
         const Spacer(flex: 2),
         // 波纹动画（动态）
         _buildWaveformArea(animated: true, statusText: '正在聆听...'),
@@ -753,11 +783,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   Widget _buildParsingLayout(BuildContext context) {
     return Column(
       children: [
-        // 关闭按钮
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _buildCloseButton(),
-        ),
         const Spacer(flex: 2),
         // 波纹动画（停止）
         _buildWaveformArea(animated: false, statusText: '正在分析...'),
@@ -769,11 +794,11 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         ),
         const SizedBox(height: 16),
         // 加载指示器
-        const SizedBox(
+        SizedBox(
           width: 28,
           height: 28,
           child: CircularProgressIndicator(
-            color: Colors.white,
+            color: AppTheme.textOnSurface(context),
             strokeWidth: 2.5,
           ),
         ),
@@ -792,15 +817,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     return SingleChildScrollView(
       child: Column(
         children: [
-          // 关闭按钮
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _buildCloseButton(),
-          ),
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
           // 最终识别文本
-          _buildRecognitionCard(text: _transcript, showLabel: true),
-          const SizedBox(height: 24),
+          // _buildRecognitionCard(text: _transcript, showLabel: true),
+          //const SizedBox(height: 24),
           // 编辑表单
           _buildEditForm(context),
           const SizedBox(height: 24),
@@ -832,10 +852,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0x0DFFFFFF),
+              color: AppTheme.glassFill(context),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0x26FFFFFF),
+                color: AppTheme.glassStroke(context),
                 width: 1,
               ),
             ),
@@ -844,7 +864,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: AppTheme.textOnSurfaceSecondary(context),
               ),
             ),
           ),
@@ -898,6 +918,40 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
+  /// 构建类型切换的一个段（支出/收入）
+  Widget _buildTypeSegment({
+    required String typeValue,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = _selectedType == typeValue;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.glassFillAccent(context)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(4),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: isSelected
+                  ? AppTheme.textOnSurface(context)
+                  : AppTheme.textOnSurfaceTertiary(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTypeToggle(BuildContext context) {
     return Container(
       height: 48,
@@ -908,58 +962,48 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedType = 'expense'),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _selectedType == 'expense'
-                      ? const Color(0x40FFFFFF)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.all(4),
-                child: Text(
-                  '支出',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _selectedType == 'expense'
-                        ? Colors.white
-                        : const Color(0x99FFFFFF),
-                  ),
-                ),
-              ),
-            ),
+          _buildTypeSegment(
+            typeValue: 'expense',
+            label: '支出',
+            onTap: () => setState(() => _selectedType = 'expense'),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedType = 'income'),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _selectedType == 'income'
-                      ? const Color(0x40FFFFFF)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.all(4),
-                child: Text(
-                  '收入',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _selectedType == 'income'
-                        ? Colors.white
-                        : const Color(0x99FFFFFF),
-                  ),
-                ),
-              ),
-            ),
+          _buildTypeSegment(
+            typeValue: 'income',
+            label: '收入',
+            onTap: () => setState(() => _selectedType = 'income'),
           ),
         ],
       ),
+    );
+  }
+
+  /// 构建毛玻璃输入框通用的 InputDecoration
+  InputDecoration _buildGlassInputDecoration({
+    String? prefixText,
+    TextStyle? prefixStyle,
+    String? hintText,
+    TextStyle? hintStyle,
+  }) {
+    return InputDecoration(
+      prefixText: prefixText,
+      prefixStyle: prefixStyle,
+      hintText: hintText,
+      hintStyle: hintStyle,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppTheme.glassStroke(context)),
+      ),
+      // 显式指定聚焦边框颜色，避免浅色主题下 primary=白色导致边框不可见
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppTheme.accentBlue, width: 2.0),
+      ),
+      filled: true,
+      fillColor: AppTheme.glassFillStrong(context),
     );
   }
 
@@ -972,27 +1016,13 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         fontWeight: FontWeight.bold,
         color: AppTheme.textOnSurface(context),
       ),
-      decoration: InputDecoration(
+      decoration: _buildGlassInputDecoration(
         prefixText: '¥ ',
         prefixStyle: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppTheme.textOnSurface(context),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
-        ),
-        filled: true,
-        fillColor: AppTheme.glassFillStrong(context),
       ),
     );
   }
@@ -1000,29 +1030,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   Widget _buildNoteField(BuildContext context) {
     return TextField(
       controller: _noteController,
-      style: TextStyle(
-        fontSize: 16,
-        color: AppTheme.textOnSurface(context),
-      ),
-      decoration: InputDecoration(
+      style: TextStyle(fontSize: 16, color: AppTheme.textOnSurface(context)),
+      decoration: _buildGlassInputDecoration(
         hintText: '添加备注...',
-        hintStyle: TextStyle(
-          color: AppTheme.textOnSurfaceTertiary(context),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassStroke(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
-        ),
-        filled: true,
-        fillColor: AppTheme.glassFillStrong(context),
+        hintStyle: TextStyle(color: AppTheme.textOnSurfaceTertiary(context)),
       ),
     );
   }
@@ -1036,14 +1047,23 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           firstDate: DateTime(2020),
           lastDate: DateTime(2100),
           builder: (context, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             return Theme(
-              data: ThemeData.dark().copyWith(
-                colorScheme: ColorScheme.dark(
-                  primary: Colors.white.withValues(alpha: 0.6),
-                  onPrimary: Colors.black,
-                  surface: const Color(0xFF2A2A2A),
-                ),
-              ),
+              data: isDark
+                  ? ThemeData.dark().copyWith(
+                      colorScheme: ColorScheme.dark(
+                        primary: Colors.white.withValues(alpha: 0.6),
+                        onPrimary: Colors.black,
+                        surface: const Color(0xFF2A2A2A),
+                      ),
+                    )
+                  : ThemeData.light().copyWith(
+                      colorScheme: ColorScheme.light(
+                        primary: AppTheme.accentBlue,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                      ),
+                    ),
               child: child!,
             );
           },
@@ -1087,14 +1107,18 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     return categoriesAsync.when(
       data: (categories) {
-        final expenseCategories =
-            categories.where((c) => c.type == 'expense').toList();
+        final expenseCategories = categories
+            .where((c) => c.type == 'expense')
+            .toList();
 
         // 如果当前选中的是 AI 推荐新分类（数据库中不存在），
         // 则保留选中值不变，稍后在 items 中添加该选项
-        final categoryExists = _selectedCategoryName.isNotEmpty &&
+        final categoryExists =
+            _selectedCategoryName.isNotEmpty &&
             expenseCategories.any((c) => c.name == _selectedCategoryName);
-        if (!categoryExists && !_isNewCategory && _selectedCategoryName.isNotEmpty) {
+        if (!categoryExists &&
+            !_isNewCategory &&
+            _selectedCategoryName.isNotEmpty) {
           _selectedCategoryName = '';
         }
 
@@ -1118,7 +1142,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                   color: AppTheme.textOnSurfaceTertiary(context),
                 ),
               ),
-              dropdownColor: const Color(0xFF2A2A2A),
+              dropdownColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2A2A)
+                  : Colors.white,
               items: [
                 // 如果存在 AI 推荐的新分类，作为首个选项展示
                 if (_isNewCategory && _selectedCategoryName.isNotEmpty)
@@ -1135,12 +1161,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                         const SizedBox(width: 8),
                         Text(
                           _selectedCategoryName,
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: AppTheme.textOnSurface(context),
+                          ),
                         ),
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0x3369DB7C),
                             borderRadius: BorderRadius.circular(4),
@@ -1185,8 +1215,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                   setState(() {
                     _selectedCategoryName = value;
                     // 判断用户选的是否为已有分类
-                    _isNewCategory =
-                        !expenseCategories.any((c) => c.name == value);
+                    _isNewCategory = !expenseCategories.any(
+                      (c) => c.name == value,
+                    );
                   });
                 }
               },
@@ -1218,16 +1249,17 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 /// 空闲/静止时显示为低矮的均匀条。
 class _WaveformBarPainter extends CustomPainter {
   final double animationValue;
+  final Color barColor;
 
-  _WaveformBarPainter({required this.animationValue});
+  _WaveformBarPainter({required this.animationValue, required this.barColor});
 
   // 条数
-  static const int barCount = 7;
+  static const int barCount = 16;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.24)
+      ..color = barColor
       ..style = PaintingStyle.fill;
 
     // 计算每条宽度和间距，居中绘制

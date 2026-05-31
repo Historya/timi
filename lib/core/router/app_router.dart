@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timi/ui/add_transaction/add_transaction_screen.dart';
+import 'package:timi/data/database/app_database.dart';
 import 'package:timi/ui/voice_input/voice_input_screen.dart';
 import 'package:timi/ui/detail/bill_detail_screen.dart';
 import 'package:timi/ui/categories/category_form_screen.dart';
@@ -35,7 +36,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add-transaction',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const AddTransactionScreen(),
+        builder: (context, state) => AddTransactionScreen(
+          // 从 extra 中提取参数：{'type': 'income'} 或 {'transaction': ...}
+          initialType: (state.extra is Map) ? (state.extra as Map)['type'] as String? : null,
+          existingTransaction: (state.extra is Map)
+              ? (state.extra as Map)['transaction'] as TransactionsTableData?
+              : null,
+        ),
       ),
       GoRoute(
         path: '/voice-input',

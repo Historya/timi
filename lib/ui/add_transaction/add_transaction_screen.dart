@@ -1,20 +1,30 @@
 // 添加交易页面 - 毛玻璃风格记账录入界面
 
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:drift/drift.dart' hide Column;
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
-import 'package:timi/ui/shared/widgets/top_notification.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
+import 'package:timi/ui/shared/widgets/top_notification.dart';
 
-/// 添加交易页面主组件
+/// 添加/编辑交易页面
+///
+/// [initialType] 初始交易类型，可选 'expense' 或 'income'，默认 'expense'
+/// [existingTransaction] 传入时为编辑模式，预填表单并更新已有交易
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  final String? initialType;
+  final TransactionsTableData? existingTransaction;
+
+  const AddTransactionScreen({
+    super.key,
+    this.initialType,
+    this.existingTransaction,
+  });
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -25,9 +35,37 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final _amountController = TextEditingController(text: '');
   final _noteController = TextEditingController();
   final _amountFocusNode = FocusNode();
-  String _type = 'expense';
+  late String _type;
   CategoriesTableData? _selectedCategory;
-  final DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    // 编辑模式：用已有交易数据预填表单
+    final existing = widget.existingTransaction;
+    if (existing != null) {
+      _type = existing.type;
+      _amountController.text = existing.amount.toStringAsFixed(2);
+      _noteController.text = existing.note ?? '';
+      _selectedDate = existing.date;
+      // 异步加载分类列表并选中当前分类
+      WidgetsBinding.instance.addPostFrameCallback((_) => _preselectCategory(existing.categoryId));
+    } else {
+      // 新建模式：从外部参数初始化交易类型
+      _type = widget.initialType ?? 'expense';
+      _selectedDate = DateTime.now();
+    }
+  }
+
+  /// 根据分类 ID 异步选中对应分类
+  Future<void> _preselectCategory(int categoryId) async {
+    final categories = await ref.read(categoryDaoProvider).getAll();
+    final match = categories.where((c) => c.id == categoryId).firstOrNull;
+    if (match != null && mounted) {
+      setState(() => _selectedCategory = match);
+    }
+  }
 
   @override
   void dispose() {
@@ -47,26 +85,37 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Future<void> _save() async {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) {
-      TopNotification.show(context,
-          message: '请输入金额', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请输入金额',
+        type: TopNotificationType.warning,
+      );
       return;
     }
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
-      TopNotification.show(context,
-          message: '请输入有效金额', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请输入有效金额',
+        type: TopNotificationType.warning,
+      );
       return;
     }
     if (_selectedCategory == null) {
-      TopNotification.show(context,
-          message: '请选择分类', type: TopNotificationType.warning);
+      TopNotification.show(
+        context,
+        message: '请选择分类',
+        type: TopNotificationType.warning,
+      );
       return;
     }
 
     final now = DateTime.now();
     final dao = ref.read(transactionDaoProvider);
-    await dao.insert(
-      TransactionsTableCompanion.insert(
+
+    if (widget.existingTransaction != null) {
+      // 编辑模式：更新已有交易
+      final updated = widget.existingTransaction!.copyWith(
         amount: amount,
         categoryId: _selectedCategory!.id,
         type: _type,
@@ -74,17 +123,40 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         note: _noteController.text.isNotEmpty
             ? Value(_noteController.text.trim())
             : const Value.absent(),
-        createdAt: now,
         updatedAt: now,
-      ),
-    );
+      );
+      await dao.update(updated.toCompanion(true));
+    } else {
+      // 新建模式：插入新交易
+      await dao.insert(
+        TransactionsTableCompanion.insert(
+          amount: amount,
+          categoryId: _selectedCategory!.id,
+          type: _type,
+          date: _selectedDate,
+          note: _noteController.text.isNotEmpty
+              ? Value(_noteController.text.trim())
+              : const Value.absent(),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
 
     // 支出类型时查询当月预算剩余额度并弹出通知
     if (_type == 'expense' && mounted) {
       await _showBudgetRemainingNotification();
     }
 
-    if (mounted) context.pop();
+    if (mounted) {
+      if (widget.existingTransaction != null) {
+        // 编辑模式：返回主页（从详情页 "编辑" 跳转后，编辑完成回首页）
+        context.go('/');
+      } else {
+        // 新建模式：返回上一个页面
+        context.pop();
+      }
+    }
   }
 
   /// 查询当月预算剩余额度，通过顶部通知弹窗展示
@@ -94,13 +166,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     // 查询当月是否设置了预算
     final budget = await budgetDao.getMonthly(
-      _selectedDate.year, _selectedDate.month,
+      _selectedDate.year,
+      _selectedDate.month,
     );
     if (budget == null) return; // 未设置预算，不弹出通知
 
     // 查询当月总支出（包含刚添加的账单）
     final totalExpense = await transactionDao.getMonthlyTotalByType(
-      _selectedDate.year, _selectedDate.month, 'expense',
+      _selectedDate.year,
+      _selectedDate.month,
+      'expense',
     );
 
     // 计算预算剩余额度（负数表示超支）
@@ -165,6 +240,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
   }
 
+  /// 根据当前模式（编辑/新建）和交易类型返回页面标题
+  String _buildTitle() {
+    if (widget.existingTransaction != null) {
+      return _type == 'expense' ? '编辑支出' : '编辑收入';
+    }
+    return _type == 'expense' ? '添加支出' : '添加收入';
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
@@ -180,7 +263,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ),
         Expanded(
           child: Text(
-            _type == 'expense' ? '添加支出' : '添加收入',
+            _buildTitle(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18,
@@ -223,8 +306,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 decoration: BoxDecoration(
                   color: isExpense
                       ? (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : const Color(0xFF1A1A1A))
+                            ? Colors.white
+                            : const Color(0xFF1A1A1A))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -236,8 +319,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     fontWeight: FontWeight.bold,
                     color: isExpense
                         ? (Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF1A1A1A)
-                            : Colors.white)
+                              ? const Color(0xFF1A1A1A)
+                              : Colors.white)
                         : AppTheme.textOnSurfaceTertiary(context),
                   ),
                 ),
@@ -253,8 +336,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 decoration: BoxDecoration(
                   color: !isExpense
                       ? (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : const Color(0xFF1A1A1A))
+                            ? Colors.white
+                            : const Color(0xFF1A1A1A))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -266,8 +349,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     fontWeight: FontWeight.bold,
                     color: !isExpense
                         ? (Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF1A1A1A)
-                            : Colors.white)
+                              ? const Color(0xFF1A1A1A)
+                              : Colors.white)
                         : AppTheme.textOnSurfaceTertiary(context),
                   ),
                 ),
@@ -282,10 +365,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Widget _buildAmountCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassDecorationFull(
-        context: context,
-        radius: 20,
-      ),
+      decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -409,25 +489,64 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             final displayList = categories.length > 8
                 ? categories.sublist(0, 8)
                 : categories;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: displayList.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.75,
-              ),
-              itemBuilder: (context, index) {
-                final cat = displayList[index];
-                final isSelected = _selectedCategory?.id == cat.id;
-                return _CategoryGridCell(
-                  category: cat,
-                  isSelected: isSelected,
-                  onTap: () => setState(() => _selectedCategory = cat),
-                );
-              },
+            return Column(
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayList.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemBuilder: (context, index) {
+                    final cat = displayList[index];
+                    final isSelected = _selectedCategory?.id == cat.id;
+                    return _CategoryGridCell(
+                      category: cat,
+                      isSelected: isSelected,
+                      onTap: () => setState(() => _selectedCategory = cat),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                // "管理分类" 按钮，跳转到分类管理页面
+                GestureDetector(
+                  onTap: () => context.push('/categories'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.glassFillStrong(context),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          PhosphorIconsLight.plusCircle,
+                          size: 16,
+                          color: AppTheme.textOnSurface(context),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '管理分类',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.textOnSurface(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           },
           loading: () => Center(
