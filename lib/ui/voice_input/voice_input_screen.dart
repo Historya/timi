@@ -817,10 +817,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     return SingleChildScrollView(
       child: Column(
         children: [
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
           // 最终识别文本
-          _buildRecognitionCard(text: _transcript, showLabel: true),
-          const SizedBox(height: 24),
+          // _buildRecognitionCard(text: _transcript, showLabel: true),
+          //const SizedBox(height: 24),
           // 编辑表单
           _buildEditForm(context),
           const SizedBox(height: 24),
@@ -997,9 +997,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: AppTheme.glassStroke(context)),
       ),
+      // 显式指定聚焦边框颜色，避免浅色主题下 primary=白色导致边框不可见
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: AppTheme.glassFillAccent(context)),
+        borderSide: const BorderSide(color: AppTheme.accentBlue, width: 2.0),
       ),
       filled: true,
       fillColor: AppTheme.glassFillStrong(context),
