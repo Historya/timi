@@ -35,7 +35,7 @@ class HomeScreen extends ConsumerWidget {
     final currentMonth = ref.watch(currentMonthProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // 根据主题亮度适配状态栏样式
-    value: Theme.of(context).brightness == Brightness.dark
+      value: Theme.of(context).brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
       child: SafeArea(
@@ -287,14 +287,16 @@ class _QuickActions extends StatelessWidget {
             icon: PhosphorIconsLight.plus,
             iconColor: AppTheme.textOnSurface(context),
             label: '支出',
-            onTap: () => context.push('/add-transaction'),
+            onTap: () =>
+                context.push('/add-transaction', extra: {'type': 'expense'}),
           ),
           const SizedBox(width: 12),
           _QuickAction(
             icon: PhosphorIconsLight.arrowDown,
             iconColor: AppTheme.accentGreen,
             label: '收入',
-            onTap: () => context.push('/add-transaction'),
+            onTap: () =>
+                context.push('/add-transaction', extra: {'type': 'income'}),
           ),
           const SizedBox(width: 12),
           _QuickAction(
