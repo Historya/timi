@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/home/home_screen.dart';
 import 'package:timi/ui/bills/bills_screen.dart';
@@ -31,36 +32,38 @@ class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key});
 
   // 四个标签页配置
-  static const _tabs = [
-    _TabConfig(PhosphorIconsLight.house, PhosphorIconsFill.house, '首页'),
-    _TabConfig(PhosphorIconsLight.receipt, PhosphorIconsFill.receipt, '账单'),
+  static List<_TabConfig> _tabs(AppLocalizations l10n) => [
+    _TabConfig(PhosphorIconsLight.house, PhosphorIconsFill.house, l10n.tabHome),
+    _TabConfig(PhosphorIconsLight.receipt, PhosphorIconsFill.receipt, l10n.myBills),
     _TabConfig(
       PhosphorIconsLight.chartPieSlice,
       PhosphorIconsFill.chartPieSlice,
-      '统计',
+      l10n.statistics,
     ),
-    _TabConfig(PhosphorIconsLight.user, PhosphorIconsFill.user, '我的'),
+    _TabConfig(PhosphorIconsLight.user, PhosphorIconsFill.user, l10n.profile),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final tabs = _tabs(l10n);
     final currentIndex = ref.watch(currentTabIndexProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     // 根据屏幕宽度选择布局
     if (screenWidth >= _tabletBreakpoint) {
-      return _buildTabletLayout(context, ref, currentIndex);
+      return _buildTabletLayout(context, ref, currentIndex, tabs);
     } else {
-      return _buildPhoneLayout(context, ref, currentIndex);
+      return _buildPhoneLayout(context, ref, currentIndex, tabs);
     }
   }
 
   /// 手机布局：底部悬浮毛玻璃药丸导航
-  Widget _buildPhoneLayout(BuildContext context, WidgetRef ref, int currentIndex) {
+  Widget _buildPhoneLayout(BuildContext context, WidgetRef ref, int currentIndex, List<_TabConfig> tabs) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     // 计算悬浮导航的宽度与底部间距
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double navWidth = screenWidth > 327 ? 327 : (screenWidth - 32);
+    final double navWidth = screenWidth > 327 ? 327 : (screenWidth - 32).clamp(0, 327);
     final double navBottom = MediaQuery.of(context).padding.bottom + 16;
 
     return Scaffold(
@@ -102,10 +105,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                   ],
                 ),
                 padding: const EdgeInsets.all(4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: List.generate(_tabs.length, (i) {
-                    final tab = _tabs[i];
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: List.generate(tabs.length, (i) {
+                      final tab = tabs[i];
                     final isActive = i == currentIndex;
                     return Expanded(
                       child: GestureDetector(
@@ -128,7 +131,6 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                                     ? AppTheme.textOnSurface(context)
                                     : AppTheme.textOnSurfaceTertiary(context),
                               ),
-                              const SizedBox(height: 2),
                               Text(
                                 tab.label,
                                 style: TextStyle(
@@ -155,7 +157,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
   }
 
   /// 平板布局：左侧 NavigationRail + 右侧内容
-  Widget _buildTabletLayout(BuildContext context, WidgetRef ref, int currentIndex) {
+  Widget _buildTabletLayout(BuildContext context, WidgetRef ref, int currentIndex, List<_TabConfig> tabs) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     // 内容区域的左侧内边距，为导航栏留出空间
     final double railWidth = 100;
@@ -183,7 +185,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               ),
             ),
             // 导航项配置
-            destinations: _tabs.map((tab) {
+            destinations: tabs.map((tab) {
               return NavigationRailDestination(
                 icon: Icon(
                   tab.icon,

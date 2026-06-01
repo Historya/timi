@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:timi/core/theme/app_theme.dart';
-import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/data/database/daos/transaction_dao.dart';
+import 'package:timi/l10n/app_localizations.dart';
+import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 
 /// 周期类型状态：'week' 表示按周展示，'month' 表示按月展示
@@ -59,13 +60,15 @@ class _Header extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 当前选中的月份
     final month = ref.watch(currentMonthProvider);
     // 实际当前月份
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, 1);
     // 判断是否已处于当前月份
-    final isCurrentMonth = month.year == today.year && month.month == today.month;
+    final isCurrentMonth =
+        month.year == today.year && month.month == today.month;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SizedBox(
@@ -75,7 +78,7 @@ class _Header extends ConsumerWidget {
           children: [
             // 标题文字
             Text(
-              '支出统计',
+              l10n.statistics,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -100,7 +103,7 @@ class _Header extends ConsumerWidget {
                       ),
                       child: Center(
                         child: Text(
-                          '回到今天',
+                          l10n.backToToday,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -128,23 +131,21 @@ class _PeriodButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 当前周期模式
     final periodType = ref.watch(periodTypeProvider);
     // 按钮显示点击后的目标模式（而非当前模式）
-    final label = periodType == 'week' ? '月' : '周';
+    final label = periodType == 'week' ? l10n.month : l10n.week;
     return GestureDetector(
       onTap: () {
         // 周/月模式切换
-        final next = periodType == 'week' ? 'month' : 'week';
+        final next = periodType == 'week' ? l10n.month : l10n.week;
         ref.read(periodTypeProvider.notifier).state = next;
       },
       child: Container(
         width: 80,
         height: 36,
-        decoration: AppTheme.glassDecoration(
-          radius: 18,
-          context: context,
-        ),
+        decoration: AppTheme.glassDecoration(radius: 18, context: context),
         child: Center(
           child: Text(
             label,
@@ -163,10 +164,12 @@ class _PeriodButton extends ConsumerWidget {
 /// 本月总支出概览卡片（radius 20，毛玻璃 + 阴影）
 class _OverviewCard extends ConsumerWidget {
   final DateTime month;
+
   const _OverviewCard({required this.month});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 当前月份汇总数据
     final statsAsync = ref.watch(monthlyStatsProvider(month));
     // 上个月汇总数据（用于环比计算）
@@ -175,16 +178,13 @@ class _OverviewCard extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassDecorationFull(
-        context: context,
-        radius: 20,
-      ),
+      decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // "X月总支出" 标签（60% 透明度）
           Text(
-            '${month.year}年${month.month}月总支出',
+            l10n.totalExpenseFor(month.year, month.month),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -229,6 +229,7 @@ class _OverviewCard extends ConsumerWidget {
     AsyncValue<MonthlySummary> currentAsync,
     AsyncValue<MonthlySummary> prevAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     // 两个数据源均加载完成后才计算环比
     final current = currentAsync.asData?.value;
     final prev = prevAsync.asData?.value;
@@ -247,12 +248,8 @@ class _OverviewCard extends ConsumerWidget {
     final color = isUp ? const Color(0xFFF87171) : const Color(0xFF4ADE80);
     final arrow = isUp ? '↑' : '↓';
     return Text(
-      '较上月 $arrow ${change.abs().toStringAsFixed(1)}%',
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: color,
-      ),
+      l10n.vsLastMonth(arrow, change.abs().toStringAsFixed(1)),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color),
     );
   }
 }
@@ -262,10 +259,12 @@ class _OverviewCard extends ConsumerWidget {
 /// - 月模式：展示选中年份 1-12 月的每月支出趋势
 class _ChartCard extends ConsumerWidget {
   final DateTime month;
+
   const _ChartCard({required this.month});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final period = ref.watch(periodTypeProvider);
     // 周模式：每日消费数据；月模式：年度每月消费数据
     final dailyAsync = ref.watch(dailyTotalsProvider(month));
@@ -284,7 +283,7 @@ class _ChartCard extends ConsumerWidget {
         children: [
           // 卡片标题，根据周期显示不同文字
           Text(
-            period == 'week' ? '本月各周消费趋势' : '年度消费趋势',
+            period == 'week' ? l10n.weeklyTrend : l10n.annualTrend,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -307,12 +306,14 @@ class _ChartCard extends ConsumerWidget {
     BuildContext context,
     AsyncValue<List<DailyTotal>> dailyAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
+
     return dailyAsync.when(
       data: (dailyTotals) {
         // 构建 day→total 映射
         final totalMap = {for (var d in dailyTotals) d.day: d.total};
         // 生成周柱状图数据和标签
-        final chartData = _buildWeekChartData(totalMap, month);
+        final chartData = _buildWeekChartData(totalMap, month, l10n);
         return Column(
           children: [
             _BarChart(values: chartData.values),
@@ -325,10 +326,8 @@ class _ChartCard extends ConsumerWidget {
         height: 130,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const SizedBox(
-        height: 130,
-        child: Center(child: Text('暂无数据')),
-      ),
+      error: (_, _) =>
+          SizedBox(height: 130, child: Center(child: Text(l10n.noData))),
     );
   }
 
@@ -337,11 +336,14 @@ class _ChartCard extends ConsumerWidget {
     BuildContext context,
     AsyncValue<List<MonthlyTotal>> yearlyAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     return yearlyAsync.when(
       data: (monthlyTotals) {
         // 提取每月支出数值和月份标签
         final values = monthlyTotals.map((m) => m.total).toList();
-        final labels = monthlyTotals.map((m) => '${m.month}月').toList();
+        final labels = monthlyTotals
+            .map((m) => l10n.monthLabel('${m.month}'))
+            .toList();
         return Column(
           children: [
             _BarChart(values: values),
@@ -354,15 +356,17 @@ class _ChartCard extends ConsumerWidget {
         height: 130,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const SizedBox(
-        height: 130,
-        child: Center(child: Text('暂无数据')),
-      ),
+      error: (_, _) =>
+          const SizedBox(height: 130, child: Center(child: Text('暂无数据'))),
     );
   }
 
   /// 将选中月份的每日支出按周分组（第1周1-7日，第2周8-14日...），生成各周汇总柱状图
-  _ChartData _buildWeekChartData(Map<int, double> totalMap, DateTime month) {
+  _ChartData _buildWeekChartData(
+    Map<int, double> totalMap,
+    DateTime month,
+    AppLocalizations l10n,
+  ) {
     // 获取当月总天数
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
     // 按月内第几周分组，每7天为一组
@@ -382,7 +386,7 @@ class _ChartCard extends ConsumerWidget {
         weekTotal += totalMap[d] ?? 0;
       }
       values.add(weekTotal);
-      labels.add('第${w + 1}周');
+      labels.add(l10n.weekLabel(w + 1));
     }
     return _ChartData(values: values, labels: labels);
   }
@@ -392,23 +396,23 @@ class _ChartCard extends ConsumerWidget {
 class _ChartData {
   final List<double> values;
   final List<String> labels;
+
   const _ChartData({required this.values, required this.labels});
 }
 
 /// 柱状图区域，支持动态数据条数（7 条或当月全部天数），柱高按最大值等比缩放
 class _BarChart extends StatelessWidget {
   final List<double> values;
+
   const _BarChart({required this.values});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 提取有效数据（>= 0）用于计算最大值
     final validValues = values.where((v) => v >= 0).toList();
     if (validValues.isEmpty) {
-      return const SizedBox(
-        height: 100,
-        child: Center(child: Text('暂无数据')),
-      );
+      return SizedBox(height: 100, child: Center(child: Text(l10n.noData)));
     }
     final maxValue = validValues.reduce((a, b) => a > b ? a : b);
     return SizedBox(
@@ -418,7 +422,9 @@ class _BarChart extends StatelessWidget {
         children: values.map((v) {
           final isValid = v >= 0;
           // 有效数据按比例映射高度（最低 5px 保证可见），无效数据高度为 0
-          final height = isValid && maxValue > 0 ? (v / maxValue) * 95 + 5 : 0.0;
+          final height = isValid && maxValue > 0
+              ? (v / maxValue) * 95 + 5
+              : 0.0;
           // 透明度随值大小在 0.25~0.5 之间变化
           final opacity = isValid && maxValue > 0
               ? 0.25 + (v / maxValue) * 0.25
@@ -430,7 +436,9 @@ class _BarChart extends StatelessWidget {
                 height: height,
                 decoration: BoxDecoration(
                   color: isValid
-                      ? AppTheme.textOnSurface(context).withValues(alpha: opacity)
+                      ? AppTheme.textOnSurface(
+                          context,
+                        ).withValues(alpha: opacity)
                       : Colors.transparent,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(6),
@@ -448,6 +456,7 @@ class _BarChart extends StatelessWidget {
 /// 底部日期标签行
 class _DateLabels extends StatelessWidget {
   final List<String> labels;
+
   const _DateLabels({required this.labels});
 
   @override
@@ -473,10 +482,12 @@ class _DateLabels extends StatelessWidget {
 /// 支出分类卡片（radius 18），从数据库获取实时分类排行数据
 class _CategoryCardSection extends ConsumerWidget {
   final DateTime month;
+
   const _CategoryCardSection({required this.month});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 当前月支出分类排行流
     final rankingsAsync = ref.watch(
       categoryRankingProvider((month: month, type: 'expense')),
@@ -486,10 +497,7 @@ class _CategoryCardSection extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 16, 10, 16),
-      decoration: AppTheme.glassDecorationFull(
-        context: context,
-        radius: 18,
-      ),
+      decoration: AppTheme.glassDecorationFull(context: context, radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -497,7 +505,7 @@ class _CategoryCardSection extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Text(
-              '支出分类',
+              l10n.expenseCategories,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -513,20 +521,27 @@ class _CategoryCardSection extends ConsumerWidget {
                 // 建立分类 id 到 CategoriesTableData 的映射
                 final catMap = {for (var c in categories) c.id: c};
                 if (rankings.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('暂无数据')),
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(child: Text(l10n.noData)),
                   );
                 }
                 // 计算总支出去求和所有排行数据
-                final totalExpense = rankings.fold<double>(0, (sum, r) => sum + r.total);
+                final totalExpense = rankings.fold<double>(
+                  0,
+                  (sum, r) => sum + r.total,
+                );
                 final maxTotal = rankings.first.total;
                 return Column(
                   children: rankings.map((r) {
                     final cat = catMap[r.categoryId];
-                    final name = cat?.name ?? '未知';
-                    final color = cat != null ? parseHexColor(cat.color) : Colors.grey;
-                    final percentage = totalExpense > 0 ? (r.total / totalExpense) * 100 : 0.0;
+                    final name = cat?.name ?? l10n.unknown;
+                    final color = cat != null
+                        ? parseHexColor(cat.color)
+                        : Colors.grey;
+                    final percentage = totalExpense > 0
+                        ? (r.total / totalExpense) * 100
+                        : 0.0;
                     final progress = maxTotal > 0 ? r.total / maxTotal : 0.0;
                     return _CategoryRow(
                       name: name,
@@ -539,10 +554,10 @@ class _CategoryCardSection extends ConsumerWidget {
                 );
               },
               loading: () => _buildCategoryLoading(),
-              error: (_, _) => const Center(child: Text('加载分类信息失败')),
+              error: (_, _) => Center(child: Text(l10n.loadCategoryFailed)),
             ),
             loading: () => _buildCategoryLoading(),
-            error: (_, _) => const Center(child: Text('加载排行数据失败')),
+            error: (_, _) => Center(child: Text(l10n.loadRankingFailed)),
           ),
         ],
       ),
@@ -587,10 +602,7 @@ class _CategoryRow extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               // 分类名称

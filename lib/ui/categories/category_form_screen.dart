@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
@@ -73,10 +74,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
   /// 保存分类（添加或更新）
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
     // 校验名称不能为空
     if (_nameController.text.trim().isEmpty) {
       TopNotification.show(context,
-          message: '请输入分类名称', type: TopNotificationType.warning);
+          message: l10n.enterCategoryName, type: TopNotificationType.warning);
       return;
     }
 
@@ -122,6 +124,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEditMode = widget.id != null;
 
     return Scaffold(
@@ -129,7 +132,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         child: Column(
           children: [
             // 头部：返回 + 标题 + 保存按钮
-            _buildHeader(context, isEditMode),
+            _buildHeader(context, isEditMode, l10n),
             // 表单内容（加载中时显示 loading）
             Expanded(
               child: _isLoading
@@ -140,16 +143,16 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // 1. 名称输入
-                          _buildNameField(context),
+                          _buildNameField(context, l10n),
                           const SizedBox(height: 20),
                           // 2. 类型选择
-                          _buildTypeToggle(context, isEditMode),
+                          _buildTypeToggle(context, isEditMode, l10n),
                           const SizedBox(height: 20),
                           // 3. 图标选择器
-                          _buildIconPicker(context),
+                          _buildIconPicker(context, l10n),
                           const SizedBox(height: 20),
                           // 4. 颜色选择器
-                          _buildColorPicker(context),
+                          _buildColorPicker(context, l10n),
                         ],
                       ),
                     ),
@@ -161,7 +164,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   }
 
   /// 构建页面头部
-  Widget _buildHeader(BuildContext context, bool isEditMode) {
+  Widget _buildHeader(BuildContext context, bool isEditMode, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Row(
@@ -179,7 +182,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           // 标题
           Expanded(
             child: Text(
-              isEditMode ? '编辑分类' : '添加分类',
+              isEditMode ? l10n.editCategory : l10n.newCategory,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -200,7 +203,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                     ),
                   )
                 : Text(
-                    '保存',
+                    l10n.save,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -214,7 +217,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   }
 
   /// 构建名称输入框
-  Widget _buildNameField(BuildContext context) {
+  Widget _buildNameField(BuildContext context, AppLocalizations l10n) {
     return Container(
       decoration: AppTheme.glassDecoration(
         radius: 12,
@@ -229,7 +232,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           fontSize: 16,
         ),
         decoration: InputDecoration(
-          hintText: '分类名称',
+          hintText: l10n.categoryName,
           hintStyle: TextStyle(
             color: AppTheme.textOnSurfaceSecondary(context),
             fontSize: 16,
@@ -242,10 +245,10 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   }
 
   /// 构建类型切换分段控件
-  Widget _buildTypeToggle(BuildContext context, bool isEditMode) {
+  Widget _buildTypeToggle(BuildContext context, bool isEditMode, AppLocalizations l10n) {
     final segments = [
-      ('expense', '支出'),
-      ('income', '收入'),
+      ('expense', l10n.expenseLabel),
+      ('income', l10n.incomeLabel),
     ];
 
     return Padding(
@@ -303,12 +306,12 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   }
 
   /// 构建图标选择器（横向滚动网格，5 行）
-  Widget _buildIconPicker(BuildContext context) {
+  Widget _buildIconPicker(BuildContext context, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择图标',
+          l10n.selectIcon,
           style: TextStyle(
             color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
             fontSize: 13,
@@ -367,12 +370,12 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   }
 
   /// 构建颜色选择器（颜色圆圈行）
-  Widget _buildColorPicker(BuildContext context) {
+  Widget _buildColorPicker(BuildContext context, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择颜色',
+          l10n.selectColor,
           style: TextStyle(
             color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
             fontSize: 13,

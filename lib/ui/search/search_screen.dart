@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
@@ -15,17 +16,26 @@ import 'package:timi/ui/shared/icon_helpers.dart';
 // ========== 工具函数 ==========
 
 /// 格式化日期为显示标签（今天 / 昨天 / MM/dd）
-String _formatDateLabel(DateTime date) {
+String _formatDateLabel(DateTime date, AppLocalizations l10n) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final dateDay = DateTime(date.year, date.month, date.day);
   if (dateDay == today) {
-    return '今天';
+    return l10n.today;
   } else if (dateDay == today.subtract(const Duration(days: 1))) {
-    return '昨天';
+    return l10n.yesterday;
   } else {
     return DateFormat('MM/dd').format(date);
   }
+}
+
+// ========== 筛选选项模型 ==========
+
+/// 筛选选项，将显示标签与内部值分离以实现 i18n
+class _FilterOption {
+  final String value;
+  final String label;
+  const _FilterOption(this.value, this.label);
 }
 
 // ========== 搜索页面 ==========
@@ -40,7 +50,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
   String _keyword = '';
-  String _activeFilter = '全部';
+  String _activeFilterValue = 'all';
   Timer? _debounceTimer;
 
   @override
@@ -59,9 +69,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   /// 切换筛选分类（立即触发搜索）
-  void _onFilterChanged(String filter) {
+  void _onFilterChanged(String filterValue) {
     _debounceTimer?.cancel();
-    setState(() => _activeFilter = filter);
+    setState(() => _activeFilterValue = filterValue);
   }
 
   /// 清除搜索内容
@@ -73,40 +83,42 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 监听全部分类，动态生成筛选栏选项和分类映射表
     final categoriesAsync = ref.watch(allCategoriesProvider);
     final categories = categoriesAsync.valueOrNull ?? [];
     final catMap = {for (final c in categories) c.id: c};
-    // 筛选栏选项：全部 / 支出 / 收入 / 各分类名称
-    final filters = <String>['全部', '支出', '收入', ...categories.map((c) => c.name)];
+    // 筛选栏选项
+    final filterOptions = <_FilterOption>[
+      _FilterOption('all', l10n.all),
+      _FilterOption('expense', l10n.expenseLabel),
+      _FilterOption('income', l10n.incomeLabel),
+      ...categories.map((c) => _FilterOption('cat_${c.id}', c.name)),
+    ];
 
     // 当前是否有活跃搜索条件
-    final hasActiveSearch = _keyword.isNotEmpty || _activeFilter != '全部';
+    final hasActiveSearch = _keyword.isNotEmpty || _activeFilterValue != 'all';
 
     // 解析当前筛选参数传给 DAO
     String? searchType;
     int? searchCategoryId;
-    if (_activeFilter == '支出') {
+    if (_activeFilterValue == 'expense') {
       searchType = 'expense';
-    } else if (_activeFilter == '收入') {
+    } else if (_activeFilterValue == 'income') {
       searchType = 'income';
-    } else if (_activeFilter != '全部') {
-      for (final c in categories) {
-        if (c.name == _activeFilter) {
-          searchCategoryId = c.id;
-          break;
-        }
-      }
+    } else if (_activeFilterValue.startsWith('cat_')) {
+      final id = int.tryParse(_activeFilterValue.substring(4));
+      if (id != null) searchCategoryId = id;
     }
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
-            _buildSearchInput(context),
+            _buildHeader(context, l10n),
+            _buildSearchInput(context, l10n),
             const SizedBox(height: 12),
-            _buildFilterBar(context, filters),
+            _buildFilterBar(context, filterOptions),
             const SizedBox(height: 12),
             Expanded(
               child: hasActiveSearch
@@ -115,8 +127,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       type: searchType,
                       categoryId: searchCategoryId,
                       catMap: catMap,
+                      l10n: l10n,
                     )
-                  : _buildEmptyState('输入关键词搜索交易', context),
+                  : _buildEmptyState(l10n.searchIdle, context),
             ),
           ],
         ),
@@ -130,6 +143,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     required String? type,
     required int? categoryId,
     required Map<int, CategoriesTableData> catMap,
+    required AppLocalizations l10n,
   }) {
     final dao = ref.read(transactionDaoProvider);
     final searchStream = dao.search(keyword, type: type, categoryId: categoryId);
@@ -138,21 +152,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       stream: searchStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return _buildEmptyState('搜索中...', context);
+          return _buildEmptyState(l10n.searchLoading, context);
         }
         if (snapshot.hasError) {
-          return _buildEmptyState('搜索出错', context);
+          return _buildEmptyState(l10n.searchError, context);
         }
 
         final results = snapshot.data ?? [];
         if (results.isEmpty) {
-          return _buildEmptyState('未找到匹配的交易', context);
+          return _buildEmptyState(l10n.noResults, context);
         }
 
         // 按日期分组
         final grouped = <String, List<TransactionsTableData>>{};
         for (final r in results) {
-          final label = _formatDateLabel(r.date);
+          final label = _formatDateLabel(r.date, l10n);
           grouped.putIfAbsent(label, () => []).add(r);
         }
 
@@ -195,7 +209,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   /// 构建顶部标题栏（返回按钮 + 标题）
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SizedBox(
@@ -213,7 +227,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '搜索',
+                l10n.search,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
@@ -230,7 +244,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   /// 构建搜索输入框（毛玻璃风格）
-  Widget _buildSearchInput(BuildContext context) {
+  Widget _buildSearchInput(BuildContext context, AppLocalizations l10n) {
     final hasText = _searchController.text.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -263,7 +277,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
-                  hintText: '搜索交易、分类...',
+                  hintText: l10n.searchHint,
                   hintStyle: TextStyle(
                     color: AppTheme.textOnSurface(context).withValues(alpha: 0.38),
                     fontSize: 15,
@@ -287,19 +301,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   /// 构建筛选栏（横向滚动）
-  Widget _buildFilterBar(BuildContext context, List<String> filters) {
+  Widget _buildFilterBar(BuildContext context, List<_FilterOption> filterOptions) {
     return SizedBox(
       height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: filters.length,
+        itemCount: filterOptions.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final label = filters[index];
-          final isActive = _activeFilter == label;
+          final option = filterOptions[index];
+          final isActive = _activeFilterValue == option.value;
           return GestureDetector(
-            onTap: () => _onFilterChanged(label),
+            onTap: () => _onFilterChanged(option.value),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
@@ -313,7 +327,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               alignment: Alignment.center,
               child: Text(
-                label,
+                option.label,
                 style: TextStyle(
                   color: isActive
                       ? AppTheme.textOnSurface(context)
@@ -388,6 +402,7 @@ class _SearchResultItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isExpense = transaction.type == 'expense';
     final amountColor = isExpense
         ? const Color(0xFFF87171)
@@ -399,7 +414,7 @@ class _SearchResultItem extends StatelessWidget {
     final iconColor = category != null
         ? parseHexColor(category!.color)
         : AppTheme.glassFill(context);
-    final catName = category?.name ?? '未分类';
+    final catName = category?.name ?? l10n.uncategorized;
     final note = transaction.note ?? '';
 
     return Container(

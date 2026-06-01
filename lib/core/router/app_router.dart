@@ -18,12 +18,18 @@ import 'package:timi/ui/shared/widgets/scaffold_with_nav_bar.dart';
 /// 根导航器 Key，暴露给外部组件（如 BudgetAlertWatcher）用于访问 Overlay
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
+/// 语言切换刷新信号，用于触发 GoRouter 重建页面（不重新创建路由器实例）
+final localeRefreshProvider = Provider<ValueNotifier<int>>((ref) {
+  return ValueNotifier(0);
+});
+
 /// GoRouter 配置
 ///
 /// 使用 IndexedStack + Riverpod 管理底部标签导航，
 /// 标签页路由统一由 '/' 承载，内部通过 currentTabIndexProvider 切换。
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    refreshListenable: ref.watch(localeRefreshProvider),
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [

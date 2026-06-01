@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
@@ -83,11 +84,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) {
       TopNotification.show(
         context,
-        message: '请输入金额',
+        message: l10n.enterAmount,
         type: TopNotificationType.warning,
       );
       return;
@@ -96,7 +98,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     if (amount == null || amount <= 0) {
       TopNotification.show(
         context,
-        message: '请输入有效金额',
+        message: l10n.enterValidAmount,
         type: TopNotificationType.warning,
       );
       return;
@@ -242,19 +244,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   /// 根据当前模式（编辑/新建）和交易类型返回页面标题
   String _buildTitle() {
+    final l10n = AppLocalizations.of(context);
     if (widget.existingTransaction != null) {
-      return _type == 'expense' ? '编辑支出' : '编辑收入';
+      return _type == 'expense' ? l10n.editExpense : l10n.editIncome;
     }
-    return _type == 'expense' ? '添加支出' : '添加收入';
+    return _type == 'expense' ? l10n.addExpense : l10n.addIncome;
   }
 
   Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         GestureDetector(
           onTap: () => context.pop(),
           child: Text(
-            '取消',
+            l10n.cancel,
             style: TextStyle(
               fontSize: 16,
               color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
@@ -275,7 +279,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         GestureDetector(
           onTap: _save,
           child: Text(
-            '完成',
+            l10n.done,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -288,6 +292,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildTypeToggle(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isExpense = _type == 'expense';
     return Container(
       decoration: BoxDecoration(
@@ -312,7 +317,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '支出',
+                  l10n.expenseLabel,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -342,7 +347,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '收入',
+                  l10n.incomeLabel,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -363,19 +368,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildAmountCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '金额',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textOnSurfaceTertiary(context),
-            ),
-          ),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -384,7 +383,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               Text(
                 '¥',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textOnSurface(context),
                 ),
@@ -407,7 +406,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     ),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: '0.00',
+                      hintText: l10n.zeroAmount,
                       hintStyle: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -456,11 +455,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     AsyncValue<List<CategoriesTableData>> categoriesAsync,
     BuildContext context,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择分类',
+          l10n.selectCategory,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -535,7 +535,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '管理分类',
+                          l10n.manageCategories,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -576,6 +576,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildNoteInput(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.glassFillStrong(context),
@@ -600,7 +601,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: '添加备注...',
+                hintText: l10n.addNoteHint,
                 hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textOnSurface(context).withValues(alpha: 0.4),
@@ -616,6 +617,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   Widget _buildSaveButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: _save,
       child: Container(
@@ -628,7 +630,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ),
         child: Center(
           child: Text(
-            '保存',
+            l10n.save,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

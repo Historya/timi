@@ -12,6 +12,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 
 class BudgetScreen extends ConsumerStatefulWidget {
@@ -139,6 +140,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final month = ref.watch(currentMonthProvider);
     final budgetAsync = ref.watch(
       monthlyBudgetProvider((year: month.year, month: month.month)),
@@ -187,7 +189,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                   error: (e, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 100),
-                      child: Text('加载失败: $e'),
+                      child: Text('${l10n.loadFailed}: $e'),
                     ),
                   ),
                 ),
@@ -201,6 +203,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   /// 头部：返回 + 标题 + 编辑/取消按钮
   Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -215,7 +218,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           ),
           const Spacer(),
           Text(
-            '预算设置',
+            l10n.budgetSettings,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -235,7 +238,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
               });
             },
             child: Text(
-              _isEditing ? '取消' : '编辑',
+              _isEditing ? l10n.cancel : l10n.edit,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -252,10 +255,11 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   /// "分类预算" 标题
   Widget _buildSectionTitle(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
-        '分类预算',
+        l10n.categoryBudget,
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
@@ -267,6 +271,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   /// 空状态
   Widget _buildEmptyState(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       child: Column(
@@ -279,7 +284,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '尚未设置月度预算',
+            l10n.noBudgetSet,
             style: TextStyle(
               fontSize: 16,
               color: AppTheme.textOnSurface(context).withValues(alpha: 0.5),
@@ -295,6 +300,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   /// 空状态的预算输入
   Widget _buildEmptyBudgetInput(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
 
     return Column(
@@ -325,7 +331,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textOnSurface(context),
                   ),
-                  hintText: '输入月度预算',
+                  hintText: l10n.enterMonthlyBudget,
                   hintStyle: TextStyle(
                     fontSize: 20,
                     color: AppTheme.textOnSurface(context)
@@ -362,9 +368,9 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    '设置预算',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.setBudget,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -384,6 +390,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     BuildContext context,
     MonthlyBudgetData data,
   ) {
+    final l10n = AppLocalizations.of(context);
     // 计算剩余金额
     final remaining = data.totalBudget - data.totalSpent;
     // 计算进度占比
@@ -404,7 +411,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           Row(
             children: [
               Text(
-                '月度预算',
+                l10n.monthlyBudget,
                 style: TextStyle(
                   fontSize: 13,
                   color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
@@ -485,7 +492,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
             Row(
               children: [
                 Text(
-                  '已用 ¥${_formatCurrency(data.totalSpent, decimals: 0)}',
+                  '${l10n.used} ¥${_formatCurrency(data.totalSpent, decimals: 0)}',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppTheme.textOnSurface(context),
@@ -493,7 +500,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
               ),
               const Spacer(),
               Text(
-                '剩余 ¥${_formatCurrency(remaining, decimals: 0)}',
+                '${l10n.remaining} ¥${_formatCurrency(remaining, decimals: 0)}',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textOnSurface(context),
@@ -511,6 +518,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     BuildContext context,
     MonthlyBudgetData data,
   ) {
+    final l10n = AppLocalizations.of(context);
     final list = data.categoryBudgets;
     if (list.isEmpty) {
       return Container(
@@ -523,7 +531,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
         ),
         child: Center(
           child: Text(
-            '暂无分类预算\n点击「编辑」为分类设置预算',
+            l10n.noCategoryBudget,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -658,15 +666,16 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
   /// 底部的保存按钮（编辑模式）
   Widget _buildSaveButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton.icon(
         onPressed: _saveBudget,
         icon: const Icon(PhosphorIconsFill.check, size: 20),
-        label: const Text(
-          '保存预算',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        label: Text(
+          l10n.saveBudget,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.accentGreen,

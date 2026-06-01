@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
 
@@ -58,10 +59,11 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
   }
 
   void _save() {
+    final l10n = AppLocalizations.of(context);
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       TopNotification.show(context,
-          message: '请输入分类名称', type: TopNotificationType.warning);
+          message: l10n.enterCategoryName, type: TopNotificationType.warning);
       return;
     }
     Navigator.of(context).pop({
@@ -73,6 +75,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isNew = widget.initialName == null;
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -93,7 +96,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isNew ? '新建分类' : '编辑分类',
+                    isNew ? l10n.newCategory : l10n.editCategory,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -113,7 +116,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
               const SizedBox(height: 20),
               // 选择图标
               Text(
-                '选择图标',
+                l10n.selectIcon,
                 style: TextStyle(
                   color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
                   fontSize: 13,
@@ -157,7 +160,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
               const SizedBox(height: 20),
               // 分类名称
               Text(
-                '分类名称',
+                l10n.categoryName,
                 style: TextStyle(
                   color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
                   fontSize: 13,
@@ -179,7 +182,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
                     fontSize: 15,
                   ),
                   decoration: InputDecoration(
-                    hintText: '输入分类名称',
+                    hintText: l10n.categoryName,
                     hintStyle: TextStyle(
                       color: AppTheme.textOnSurface(context).withValues(alpha: 0.38),
                     ),
@@ -191,7 +194,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
               const SizedBox(height: 20),
               // 分类颜色
               Text(
-                '分类颜色',
+                l10n.selectColor,
                 style: TextStyle(
                   color: AppTheme.textOnSurface(context).withValues(alpha: 0.6),
                   fontSize: 13,
@@ -250,7 +253,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '取消',
+                          l10n.cancel,
                           style: TextStyle(
                             color: AppTheme.textOnSurfaceSecondary(context),
                             fontSize: 15,
@@ -274,7 +277,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '保存',
+                          l10n.save,
                           style: TextStyle(
                             color: AppTheme.textOnSurface(context),
                             fontSize: 15,

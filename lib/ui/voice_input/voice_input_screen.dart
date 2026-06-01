@@ -14,6 +14,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:record/record.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/services/asr_service.dart';
@@ -106,6 +107,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   /// 按下麦克风按钮时调用 — 开始录音
   Future<void> _startRecording() async {
     debugPrint('[VoiceInput] === _startRecording ===');
+    final l10n = AppLocalizations.of(context);
 
     // 检查麦克风权限
     final hasPermission = await _recorder.hasPermission();
@@ -113,7 +115,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       if (!mounted) return;
       TopNotification.show(
         context,
-        message: '需要麦克风权限才能录音',
+        message: l10n.micPermissionRequired,
         type: TopNotificationType.warning,
       );
       return;
@@ -133,7 +135,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         if (!mounted) return;
         TopNotification.show(
           context,
-          message: '请先在设置中配置语音识别 API Key',
+          message: l10n.asrConfigRequired,
           type: TopNotificationType.warning,
         );
         return;
@@ -177,7 +179,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           if (!mounted) return;
           TopNotification.show(
             context,
-            message: '录音出错：$error',
+            message: l10n.recordingError(error.toString()),
             type: TopNotificationType.error,
           );
         },
@@ -200,7 +202,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       if (mounted) {
         TopNotification.show(
           context,
-          message: '语音识别连接失败：$e',
+          message: l10n.speechRecognitionFailed(e.toString()),
           type: TopNotificationType.error,
         );
       }
@@ -210,6 +212,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   /// 松开麦克风按钮时调用 — 停止录音
   Future<void> _stopRecording() async {
     debugPrint('[VoiceInput] === _stopRecording ===');
+    final l10n = AppLocalizations.of(context);
 
     // 如果不在录音状态则忽略
     if (_state != _VoiceInputState.recording) return;
@@ -252,7 +255,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       if (fullText.isEmpty) {
         TopNotification.show(
           context,
-          message: '未识别到语音内容，请重试',
+          message: l10n.noSpeechDetected,
           type: TopNotificationType.warning,
         );
         _resetToIdle();
@@ -317,7 +320,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       if (!mounted) return;
       TopNotification.show(
         context,
-        message: '语音识别失败：$e',
+        message: l10n.speechRecognitionFailed(e.toString()),
         type: TopNotificationType.error,
       );
       _resetToIdle();
@@ -344,13 +347,14 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   /// 确认创建交易记录
   Future<void> _confirmTransaction() async {
     if (_isSaving) return;
+    final l10n = AppLocalizations.of(context);
 
     final amountText = _amountController.text.trim();
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
       TopNotification.show(
         context,
-        message: '请输入有效金额',
+        message: l10n.enterValidAmount,
         type: TopNotificationType.warning,
       );
       return;
@@ -359,7 +363,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     if (_selectedCategoryName.isEmpty) {
       TopNotification.show(
         context,
-        message: '请选择分类',
+        message: l10n.pleaseSelectCategory,
         type: TopNotificationType.warning,
       );
       return;
@@ -427,7 +431,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       debugPrint('[VoiceInput] 交易保存成功');
       TopNotification.show(
         context,
-        message: '记账成功',
+        message: l10n.recordingSuccess,
         type: TopNotificationType.success,
       );
       context.pop();
@@ -436,7 +440,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       if (!mounted) return;
       TopNotification.show(
         context,
-        message: '保存失败：$e',
+        message: l10n.saveFailed(e.toString()),
         type: TopNotificationType.error,
       );
     } finally {
@@ -486,8 +490,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 左上角关闭按钮，40×40 毛玻璃圆，x 图标
   Widget _buildCloseButton() {
+    final l10n = AppLocalizations.of(context);
     return Tooltip(
-      message: '关闭',
+      message: l10n.close,
       child: GestureDetector(
         onTap: () {
           if (_state == _VoiceInputState.recording) {
@@ -571,6 +576,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 语音识别文本展示区域，毛玻璃卡片样式
   Widget _buildRecognitionCard({required String text, bool showLabel = false}) {
+    final l10n = AppLocalizations.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -588,7 +594,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
             children: [
               if (showLabel)
                 Text(
-                  '识别结果',
+                  l10n.recognitionResult,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -600,7 +606,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                 ),
               if (showLabel) const SizedBox(height: 10),
               Text(
-                text.isEmpty ? '等待语音输入...' : text,
+                text.isEmpty ? l10n.waitingForSpeech : text,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
@@ -625,6 +631,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   ///
   /// 视觉样式根据录音状态切换：空闲态半透明，录音中加强填充。
   Widget _buildMicButton() {
+    final l10n = AppLocalizations.of(context);
     final isRecording = _state == _VoiceInputState.recording;
     return Listener(
       // 按下 → 开始录音
@@ -667,7 +674,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           const SizedBox(height: 12),
           // 状态提示文字
           Text(
-            isRecording ? '松开结束' : '按住说话',
+            isRecording ? l10n.releaseToStop : l10n.holdToTalk,
             style: TextStyle(
               fontSize: 13,
               fontWeight: isRecording ? FontWeight.w500 : FontWeight.normal,
@@ -685,6 +692,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 确认添加账目按钮 — 用户松开按钮后，识别到账目时显示
   Widget _buildConfirmButton() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: _isSaving ? null : _confirmTransaction,
       child: ClipRRect(
@@ -722,7 +730,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '确定添加账目',
+                          l10n.confirmTransaction,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -742,11 +750,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 初始空闲态：波纹静止 + 空识别卡片 + 麦克风按钮（"按住说话"）
   Widget _buildIdleLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         const Spacer(flex: 2),
         // 波纹动画（静止）
-        _buildWaveformArea(animated: false, statusText: '准备就绪'),
+        _buildWaveformArea(animated: false, statusText: l10n.ready),
         const SizedBox(height: 16),
         // 识别文本卡片（空）
         _buildRecognitionCard(text: ''),
@@ -760,15 +769,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 录音中：波纹动画 + 实时识别文本 + 麦克风按钮（按压态）
   Widget _buildRecordingLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         const Spacer(flex: 2),
         // 波纹动画（动态）
-        _buildWaveformArea(animated: true, statusText: '正在聆听...'),
+        _buildWaveformArea(animated: true, statusText: l10n.listening),
         const SizedBox(height: 16),
         // 实时识别文本
         _buildRecognitionCard(
-          text: _transcript.isEmpty ? '聆听中...' : _transcript,
+          text: _transcript.isEmpty ? l10n.listening : _transcript,
           showLabel: true,
         ),
         const Spacer(flex: 2),
@@ -781,15 +791,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 解析中态：波纹停止 + 实时文本 + 加载指示器
   Widget _buildParsingLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         const Spacer(flex: 2),
         // 波纹动画（停止）
-        _buildWaveformArea(animated: false, statusText: '正在分析...'),
+        _buildWaveformArea(animated: false, statusText: l10n.analyzing),
         const SizedBox(height: 16),
         // 识别文本
         _buildRecognitionCard(
-          text: _transcript.isEmpty ? '正在获取识别结果...' : _transcript,
+          text: _transcript.isEmpty ? l10n.gettingRecognitionResult : _transcript,
           showLabel: true,
         ),
         const SizedBox(height: 16),
@@ -842,6 +853,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   ///
   /// 与确认按钮横向并列，毛玻璃样式，视觉对称
   Widget _buildCancelButton() {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: _resetToIdle,
       child: ClipRRect(
@@ -860,7 +872,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
               ),
             ),
             child: Text(
-              '取消',
+              l10n.cancel,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -876,31 +888,32 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   // ─── 编辑表单（结果态） ────────────────────────
 
   Widget _buildEditForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 金额输入
-        _buildFormLabel(context, '金额'),
+        _buildFormLabel(context, l10n.amount),
         const SizedBox(height: 8),
         _buildAmountField(context),
         const SizedBox(height: 20),
         // 交易类型
-        _buildFormLabel(context, '类型'),
+        _buildFormLabel(context, l10n.type),
         const SizedBox(height: 8),
         _buildTypeToggle(context),
         const SizedBox(height: 20),
         // 分类选择（含 AI 推荐新分类）
-        _buildFormLabel(context, '分类'),
+        _buildFormLabel(context, l10n.category),
         const SizedBox(height: 8),
         _buildCategoryDropdown(context),
         const SizedBox(height: 20),
         // 日期选择
-        _buildFormLabel(context, '日期'),
+        _buildFormLabel(context, l10n.date),
         const SizedBox(height: 8),
         _buildDateField(context),
         const SizedBox(height: 20),
         // 备注输入
-        _buildFormLabel(context, '备注'),
+        _buildFormLabel(context, l10n.note),
         const SizedBox(height: 8),
         _buildNoteField(context),
       ],
@@ -953,6 +966,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   }
 
   Widget _buildTypeToggle(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -964,12 +978,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         children: [
           _buildTypeSegment(
             typeValue: 'expense',
-            label: '支出',
+            label: l10n.expenseLabel,
             onTap: () => setState(() => _selectedType = 'expense'),
           ),
           _buildTypeSegment(
             typeValue: 'income',
-            label: '收入',
+            label: l10n.incomeLabel,
             onTap: () => setState(() => _selectedType = 'income'),
           ),
         ],
@@ -1028,11 +1042,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   }
 
   Widget _buildNoteField(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return TextField(
       controller: _noteController,
       style: TextStyle(fontSize: 16, color: AppTheme.textOnSurface(context)),
       decoration: _buildGlassInputDecoration(
-        hintText: '添加备注...',
+        hintText: l10n.addNoteHint,
         hintStyle: TextStyle(color: AppTheme.textOnSurfaceTertiary(context)),
       ),
     );
@@ -1103,6 +1118,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   }
 
   Widget _buildCategoryDropdown(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final categoriesAsync = ref.watch(allCategoriesProvider);
 
     return categoriesAsync.when(
@@ -1137,7 +1153,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                   : _selectedCategoryName,
               isExpanded: true,
               hint: Text(
-                '选择分类',
+                l10n.selectCategory,
                 style: TextStyle(
                   color: AppTheme.textOnSurfaceTertiary(context),
                 ),
@@ -1175,8 +1191,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                             color: const Color(0x3369DB7C),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            '推荐新分类',
+                          child: Text(
+                            l10n.newCategoryRecommended,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,

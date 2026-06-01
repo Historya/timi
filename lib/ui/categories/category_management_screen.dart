@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +27,7 @@ class _CategoryManagementScreenState
 
   /// 显示分类操作菜单（编辑/删除）
   void _showCategoryOptions(BuildContext context, CategoriesTableData cat) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -66,7 +68,7 @@ class _CategoryManagementScreenState
                   context.push('/categories/edit/${cat.id}');
                 },
                 icon: const Icon(PhosphorIconsLight.pencil),
-                label: const Text('编辑分类'),
+                label: Text(l10n.editCategory),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.glassFillStrong(context),
                   foregroundColor: AppTheme.textOnSurface(context),
@@ -87,7 +89,7 @@ class _CategoryManagementScreenState
                   _confirmDelete(context, cat);
                 },
                 icon: const Icon(PhosphorIconsLight.trash),
-                label: const Text('删除分类'),
+                label: Text(l10n.deleteCategory),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0x33F87171),
                   foregroundColor: const Color(0xFFF87171),
@@ -106,6 +108,7 @@ class _CategoryManagementScreenState
 
   /// 确认删除分类（先检查是否有交易引用）
   Future<void> _confirmDelete(BuildContext context, CategoriesTableData cat) async {
+    final l10n = AppLocalizations.of(context);
     final transactionDao = ref.read(transactionDaoProvider);
     final count = await transactionDao.countByCategoryId(cat.id);
     if (!context.mounted) return;
@@ -117,17 +120,17 @@ class _CategoryManagementScreenState
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surface,
           title: Text(
-            '无法删除',
+            l10n.cannotDelete,
             style: TextStyle(color: AppTheme.textOnSurface(ctx)),
           ),
           content: Text(
-            '该分类下有 $count 笔交易，无法删除。\n请先删除相关交易后再试。',
+            l10n.cannotDeleteHint(count),
             style: TextStyle(color: AppTheme.textOnSurfaceSecondary(context)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('知道了'),
+              child: Text(l10n.ok),
             ),
           ],
         ),
@@ -139,27 +142,24 @@ class _CategoryManagementScreenState
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(ctx).colorScheme.surface,
           title: Text(
-            '确认删除',
+            l10n.confirmDelete,
             style: TextStyle(color: AppTheme.textOnSurface(ctx)),
           ),
           content: Text(
-            '确定要删除分类「${cat.name}」吗？\n此操作不可撤销。',
+            l10n.confirmDeleteCategory(cat.name),
             style: TextStyle(color: AppTheme.textOnSurfaceSecondary(context)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               child: Text(
-                '取消',
+                l10n.cancel,
                 style: TextStyle(color: AppTheme.textOnSurfaceTertiary(context)),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text(
-                '删除',
-                style: TextStyle(color: Color(0xFFF87171)),
-              ),
+              child: Text(l10n.delete, style: const TextStyle(color: Color(0xFFF87171))),
             ),
           ],
         ),
@@ -191,6 +191,7 @@ class _CategoryManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 按类型监听分类数据流
     final categoriesAsync = ref.watch(categoriesByTypeProvider(_selectedType));
 
@@ -202,11 +203,12 @@ class _CategoryManagementScreenState
         body: SafeArea(
           child: Column(
             children: [
-              const _Header(),
+              _Header(l10n: l10n),
               const SizedBox(height: 10),
               _TypeToggle(
                 selectedType: _selectedType,
                 onChanged: (type) => setState(() => _selectedType = type),
+                l10n: l10n,
               ),
               const SizedBox(height: 10),
               const _HintText(),
@@ -218,7 +220,7 @@ class _CategoryManagementScreenState
                     if (categories.isEmpty) {
                       return Center(
                         child: Text(
-                          '暂无分类',
+                          l10n.noCategoriesYet,
                           style: TextStyle(
                             color: AppTheme.textOnSurface(context).withValues(alpha: 0.38),
                           ),
@@ -252,7 +254,7 @@ class _CategoryManagementScreenState
                   ),
                   // 加载失败状态
                   error: (e, _) => Center(
-                    child: Text('加载失败: $e'),
+                    child: Text(l10n.loadFailed),
                   ),
                 ),
               ),
@@ -266,7 +268,9 @@ class _CategoryManagementScreenState
 
 /// 头部：返回按钮 + 分类管理标题 + 添加按钮
 class _Header extends StatelessWidget {
-  const _Header();
+  final AppLocalizations l10n;
+
+  const _Header({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -285,7 +289,7 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              '分类管理',
+              l10n.categoryManagement,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -320,10 +324,12 @@ class _Header extends StatelessWidget {
 class _TypeToggle extends StatelessWidget {
   final String selectedType;
   final ValueChanged<String> onChanged;
+  final AppLocalizations l10n;
 
   const _TypeToggle({
     required this.selectedType,
     required this.onChanged,
+    required this.l10n,
   });
 
   @override
@@ -338,8 +344,8 @@ class _TypeToggle extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _buildSegment('expense', '支出分类', context),
-            _buildSegment('income', '收入分类', context),
+            _buildSegment('expense', l10n.expenseCategories_, context),
+            _buildSegment('income', l10n.incomeCategories_, context),
           ],
         ),
       ),
@@ -386,10 +392,11 @@ class _HintText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Text(
-        '长按拖动排序 · 点击编辑',
+        l10n.hintDragEdit,
         style: TextStyle(
           fontSize: 12,
           color: AppTheme.textOnSurfaceTertiary(context),
@@ -405,8 +412,9 @@ class _IncomeSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Text(
-      '收入分类',
+      l10n.incomeCategories_,
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,

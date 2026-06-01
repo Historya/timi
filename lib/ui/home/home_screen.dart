@@ -9,18 +9,19 @@ import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
+import 'package:timi/l10n/app_localizations.dart';
 
 /// 格式化交易时间为相对描述
 /// 今天 → "今天 12:30"，昨天 → "昨天 09:15"，更早 → "05/14 22:10"
-String _formatTime(DateTime date) {
+String _formatTime(DateTime date, AppLocalizations l10n) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final dateDay = DateTime(date.year, date.month, date.day);
   final timeFmt = DateFormat('HH:mm');
   if (dateDay == today) {
-    return '今天 ${timeFmt.format(date)}';
+    return '${l10n.today} ${timeFmt.format(date)}';
   } else if (dateDay == today.subtract(const Duration(days: 1))) {
-    return '昨天 ${timeFmt.format(date)}';
+    return '${l10n.yesterday} ${timeFmt.format(date)}';
   } else {
     return DateFormat('MM/dd HH:mm').format(date);
   }
@@ -65,7 +66,7 @@ class _Header extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '我的账单',
+              AppLocalizations.of(context).myBills,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -87,7 +88,7 @@ class _BellButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: '通知',
+      message: AppLocalizations.of(context).notification,
       child: Container(
         width: 40,
         height: 40,
@@ -161,15 +162,15 @@ class _Content extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('交易数据加载失败: $err')),
+              error: (err, _) => Center(child: Text('${AppLocalizations.of(context).loadFailed}: $err')),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('统计数据加载失败: $err')),
+          error: (err, _) => Center(child: Text('${AppLocalizations.of(context).loadFailed}: $err')),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('分类数据加载失败: $err')),
+      error: (err, _) => Center(child: Text('${AppLocalizations.of(context).loadFailed}: $err')),
     );
   }
 }
@@ -199,7 +200,7 @@ class _BalanceCard extends StatelessWidget {
         children: [
           // "总资产 (元)" 标签
           Text(
-            '总资产 (元)',
+            AppLocalizations.of(context).totalAssets,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -217,53 +218,62 @@ class _BalanceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // 收入 + 支出明细行
+          // 收入 + 支出明细行（使用 Expanded 防止金额过长溢出）
           Row(
             children: [
-              // 收入
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.accentGreen,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.accentGreen,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '收入  ¥${NumberFormat('#,###').format(income)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${AppLocalizations.of(context).income}  ¥${NumberFormat('#,###').format(income)}',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 16),
               // 支出
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF87171),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF87171),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '支出  ¥${NumberFormat('#,###').format(expense)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${AppLocalizations.of(context).expense}  ¥${NumberFormat('#,###').format(expense)}',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -286,7 +296,7 @@ class _QuickActions extends StatelessWidget {
           _QuickAction(
             icon: PhosphorIconsLight.plus,
             iconColor: AppTheme.textOnSurface(context),
-            label: '支出',
+            label: AppLocalizations.of(context).expense,
             onTap: () =>
                 context.push('/add-transaction', extra: {'type': 'expense'}),
           ),
@@ -294,7 +304,7 @@ class _QuickActions extends StatelessWidget {
           _QuickAction(
             icon: PhosphorIconsLight.arrowDown,
             iconColor: AppTheme.accentGreen,
-            label: '收入',
+            label: AppLocalizations.of(context).income,
             onTap: () =>
                 context.push('/add-transaction', extra: {'type': 'income'}),
           ),
@@ -302,14 +312,14 @@ class _QuickActions extends StatelessWidget {
           _QuickAction(
             icon: PhosphorIconsLight.microphone,
             iconColor: const Color(0xFFFBBF24),
-            label: '语音',
+            label: AppLocalizations.of(context).voiceInput,
             onTap: () => context.push('/voice-input'),
           ),
           const SizedBox(width: 12),
           _QuickAction(
             icon: PhosphorIconsLight.dotsThree,
             iconColor: AppTheme.textOnSurface(context),
-            label: '更多',
+            label: AppLocalizations.of(context).more,
             onTap: () => context.push('/search'),
           ),
         ],
@@ -381,7 +391,7 @@ class _SectionHeader extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '最近交易',
+            AppLocalizations.of(context).recentTransactions,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -389,11 +399,11 @@ class _SectionHeader extends ConsumerWidget {
             ),
           ),
           Tooltip(
-            message: '查看全部',
+            message: AppLocalizations.of(context).viewAll,
             child: GestureDetector(
               onTap: () => ref.read(currentTabIndexProvider.notifier).state = 1,
               child: Text(
-                '查看全部',
+                AppLocalizations.of(context).viewAll,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -434,7 +444,7 @@ class _TransactionCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '暂无交易记录',
+                AppLocalizations.of(context).noTransactions,
                 style: TextStyle(
                   color: AppTheme.textOnSurface(
                     context,
@@ -511,9 +521,9 @@ class _TransactionRow extends StatelessWidget {
         : Colors.grey;
     final Color iconBg = iconColor.withValues(alpha: 0.2);
     // 交易名称 = 分类名，未匹配到则显示"未分类"
-    final String name = category?.name ?? '未分类';
+    final String name = category?.name ?? AppLocalizations.of(context).uncategorized;
     // 显示格式化时间
-    final String timeStr = _formatTime(transaction.date);
+    final String timeStr = _formatTime(transaction.date, AppLocalizations.of(context));
 
     return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
@@ -559,13 +569,16 @@ class _TransactionRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                // 金额
-                Text(
-                  '$sign¥${NumberFormat('#,###.00').format(transaction.amount)}',
-                  style: TextStyle(
-                    color: amountColor,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                // 金额（防止过长溢出）
+                Flexible(
+                  child: Text(
+                    '$sign¥${NumberFormat('#,###.00').format(transaction.amount)}',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: amountColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

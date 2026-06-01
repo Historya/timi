@@ -9,26 +9,27 @@ import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
+import 'package:timi/l10n/app_localizations.dart';
 
 /// 返回日期的相对标签："今天" / "昨天" / "M月d日"
-String _formatDateLabel(DateTime date) {
+String _formatDateLabel(DateTime date, AppLocalizations l10n) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final dateDay = DateTime(date.year, date.month, date.day);
-  if (dateDay == today) return '今天';
-  if (dateDay == today.subtract(const Duration(days: 1))) return '昨天';
-  return DateFormat('M月d日').format(date);
+  if (dateDay == today) return l10n.today;
+  if (dateDay == today.subtract(const Duration(days: 1))) return l10n.yesterday;
+  return DateFormat('M/dd').format(date);
 }
 
 /// 格式化交易时间为相对描述："今天 12:30" / "昨天 09:15" / "MM/dd HH:mm"
-String _formatTime(DateTime date) {
+String _formatTime(DateTime date, AppLocalizations l10n) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final dateDay = DateTime(date.year, date.month, date.day);
   final timeFmt = DateFormat('HH:mm');
-  if (dateDay == today) return '今天 ${timeFmt.format(date)}';
+  if (dateDay == today) return '${l10n.today} ${timeFmt.format(date)}';
   if (dateDay == today.subtract(const Duration(days: 1))) {
-    return '昨天 ${timeFmt.format(date)}';
+    return '${l10n.yesterday} ${timeFmt.format(date)}';
   }
   return DateFormat('MM/dd HH:mm').format(date);
 }
@@ -133,7 +134,7 @@ class _Header extends StatelessWidget {
           children: [
             // "账单明细" 标题，22px 粗体
             Text(
-              '账单明细',
+              AppLocalizations.of(context).billDetail,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -142,7 +143,7 @@ class _Header extends StatelessWidget {
             ),
             // 搜索按钮（40×40 圆形毛玻璃）
             Tooltip(
-              message: '搜索',
+              message: AppLocalizations.of(context).search,
               child: Container(
                 width: 40,
                 height: 40,
@@ -176,7 +177,8 @@ class _MonthSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = DateFormat('yyyy年M月');
+    final l10n = AppLocalizations.of(context);
+    final fmt = DateFormat.yMMM(l10n.localeName);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       child: Row(
@@ -184,7 +186,7 @@ class _MonthSelector extends ConsumerWidget {
         children: [
           // 上个月按钮（36×36 圆形）
           Tooltip(
-            message: '上个月',
+            message: l10n.previousMonth,
             child: GestureDetector(
               onTap: () {
                 ref.read(currentMonthProvider.notifier).state = DateTime(
@@ -222,7 +224,7 @@ class _MonthSelector extends ConsumerWidget {
           const SizedBox(width: 16),
           // 下个月按钮（36×36 圆形）
           Tooltip(
-            message: '下个月',
+            message: l10n.nextMonth,
             child: GestureDetector(
               onTap: () {
                 ref.read(currentMonthProvider.notifier).state = DateTime(
@@ -303,7 +305,7 @@ class _Content extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '暂无交易记录',
+                      AppLocalizations.of(context).noTransactions,
                       style: TextStyle(
                         color: AppTheme.textOnSurface(
                           context,
@@ -372,7 +374,7 @@ class _MonthlySummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  '本月收入',
+                  AppLocalizations.of(context).thisMonthIncome,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textOnSurface(
@@ -404,7 +406,7 @@ class _MonthlySummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  '本月支出',
+                  AppLocalizations.of(context).thisMonthExpense,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppTheme.textOnSurface(
@@ -455,7 +457,7 @@ class _DateGroup extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8, left: 4),
             child: Text(
-              _formatDateLabel(date),
+              _formatDateLabel(date, AppLocalizations.of(context)),
               style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.textOnSurfaceSecondary(context),
@@ -494,9 +496,9 @@ class _BillItem extends StatelessWidget {
         ? const Color(0xFFF87171)
         : const Color(0xFF4ADE80);
     final sign = isExpense ? '-' : '+';
-    final name = category?.name ?? '未分类';
+    final name = category?.name ?? AppLocalizations.of(context).uncategorized;
     // 相对时间描述
-    final timeStr = _formatTime(transaction.date);
+    final timeStr = _formatTime(transaction.date, AppLocalizations.of(context));
 
     // 分类图标及颜色
     final icon = category != null

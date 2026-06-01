@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -10,6 +11,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: Theme.of(context).brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
@@ -18,11 +20,11 @@ class AboutScreen extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              _buildHeader(context),
-              _buildAppIcon(context),
+              _buildHeader(context, l10n),
+              _buildAppIcon(context, l10n),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildMenuCard(context),
+                child: _buildMenuCard(context, l10n),
               ),
               const Spacer(),
               _buildCopyright(),
@@ -35,7 +37,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   /// 头部：返回箭头 24px + "关于" 20px 粗体居中 + 间隔块
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -50,7 +52,7 @@ class AboutScreen extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '关于',
+              l10n.about_,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -66,7 +68,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   /// 应用图标区域：居中纵向，间距 8，上边距 32
-  Widget _buildAppIcon(BuildContext context) {
+  Widget _buildAppIcon(BuildContext context, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 32),
       child: Column(
@@ -105,7 +107,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '极简语音记账',
+            l10n.appTagline,
             style: TextStyle(
               fontSize: 13,
               color: AppTheme.textOnSurface(context).withValues(alpha: 0.38),
@@ -117,7 +119,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   /// 关于菜单卡片：圆角 16，毛玻璃背景
-  Widget _buildMenuCard(BuildContext context) {
+  Widget _buildMenuCard(BuildContext context, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.glassFillStrong(context),
@@ -132,8 +134,9 @@ class AboutScreen extends StatelessWidget {
         children: [
           _buildMenuItem(
             icon: PhosphorIconsLight.note,
-            title: '更新日志',
+            title: l10n.changelog,
             context: context,
+            l10n: l10n,
           ),
           Divider(
             color: AppTheme.glassFill(context),
@@ -141,8 +144,9 @@ class AboutScreen extends StatelessWidget {
           ),
           _buildMenuItem(
             icon: PhosphorIconsLight.fileText,
-            title: '用户协议',
+            title: l10n.termsOfService,
             context: context,
+            l10n: l10n,
           ),
           Divider(
             color: AppTheme.glassFill(context),
@@ -150,8 +154,9 @@ class AboutScreen extends StatelessWidget {
           ),
           _buildMenuItem(
             icon: PhosphorIconsLight.lock,
-            title: '隐私政策',
+            title: l10n.privacyPolicy,
             context: context,
+            l10n: l10n,
           ),
         ],
       ),
@@ -163,13 +168,14 @@ class AboutScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required BuildContext context,
+    required AppLocalizations l10n,
   }) {
     return SizedBox(
       height: 52,
       child: GestureDetector(
         onTap: () {
           TopNotification.show(context,
-              message: '$title（待实现）',
+              message: l10n.featureComingSoon(title),
               type: TopNotificationType.info);
         },
         child: Padding(

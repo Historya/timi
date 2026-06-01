@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 
@@ -53,6 +54,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -60,7 +62,7 @@ class _Header extends StatelessWidget {
         children: [
           // "我的" 标题文字
           Text(
-            '我的',
+            l10n.profile,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -152,6 +154,7 @@ class _StatsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 监听指定月份的汇总统计数据
     final statsAsync = ref.watch(monthlyStatsProvider(month));
     return Container(
@@ -160,7 +163,7 @@ class _StatsCard extends ConsumerWidget {
       decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: statsAsync.when(
         // 加载成功显示真实数据
-        data: (stats) => _buildStatsRow(
+        data: (stats) => _buildStatsRow(l10n,
           expense:
               '¥${NumberFormat('#,###').format(stats.totalExpense.round())}',
           income: '¥${NumberFormat('#,###').format(stats.totalIncome.round())}',
@@ -168,26 +171,26 @@ class _StatsCard extends ConsumerWidget {
         ),
         // 加载中或出错时显示占位符
         loading: () =>
-            _buildStatsRow(expense: '---', income: '---', count: '---'),
+            _buildStatsRow(l10n, expense: '---', income: '---', count: '---'),
         error: (_, _) =>
-            _buildStatsRow(expense: '---', income: '---', count: '---'),
+            _buildStatsRow(l10n, expense: '---', income: '---', count: '---'),
       ),
     );
   }
 
   /// 构建三栏统计数据行
-  Widget _buildStatsRow({
+  Widget _buildStatsRow(AppLocalizations l10n, {
     required String expense,
     required String income,
     required String count,
   }) {
     return Row(
       children: [
-        _StatItem(value: expense, label: '本月支出'),
+        _StatItem(value: expense, label: l10n.monthlyExpense),
         const _VertDivider(),
-        _StatItem(value: income, label: '本月收入'),
+        _StatItem(value: income, label: l10n.monthlyIncome),
         const _VertDivider(),
-        _StatItem(value: count, label: '总交易'),
+        _StatItem(value: count, label: l10n.totalTransactions),
       ],
     );
   }
@@ -249,10 +252,11 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
-        '⚙ 功能设置',
+        l10n.featureSettings,
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
@@ -269,6 +273,7 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       decoration: AppTheme.glassDecoration(
@@ -282,7 +287,7 @@ class _MenuCard extends StatelessWidget {
           _MenuRow(
             icon: PhosphorIconsLight.tag,
             iconBgColor: const Color(0x336366F1),
-            label: '分类管理',
+            label: l10n.categories,
             route: '/categories',
           ),
           Divider(
@@ -293,7 +298,7 @@ class _MenuCard extends StatelessWidget {
           _MenuRow(
             icon: PhosphorIconsLight.wallet,
             iconBgColor: const Color(0x33FBBF24),
-            label: '预算设置',
+            label: l10n.budget,
             route: '/budget',
           ),
           Divider(
@@ -304,7 +309,7 @@ class _MenuCard extends StatelessWidget {
           _MenuRow(
             icon: PhosphorIconsLight.arrowSquareOut,
             iconBgColor: const Color(0x3334D399),
-            label: '数据导出',
+            label: l10n.dataExport,
             route: '/export',
           ),
           Divider(
@@ -315,7 +320,7 @@ class _MenuCard extends StatelessWidget {
           _MenuRow(
             icon: PhosphorIconsLight.gear,
             iconBgColor: const Color(0x330EA5E9),
-            label: '设置',
+            label: l10n.settings,
             route: '/settings',
           ),
           Divider(
@@ -326,7 +331,7 @@ class _MenuCard extends StatelessWidget {
           _MenuRow(
             icon: PhosphorIconsLight.info,
             iconBgColor: const Color(0x26FFFFFF),
-            label: '关于',
+            label: l10n.about,
             route: '/about',
           ),
         ],

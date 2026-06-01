@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
 
 class DataExportScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: Theme.of(context).brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
@@ -29,19 +31,19 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              _buildHeader(context),
+              _buildHeader(context, l10n),
               const SizedBox(height: 10),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      _buildDateRangeSection(context),
+                      _buildDateRangeSection(context, l10n),
                       const SizedBox(height: 20),
-                      _buildContentTypeSection(context),
+                      _buildContentTypeSection(context, l10n),
                       const SizedBox(height: 20),
-                      _buildFormatSection(context),
+                      _buildFormatSection(context, l10n),
                       const SizedBox(height: 32),
-                      _buildExportButton(context),
+                      _buildExportButton(context, l10n),
                     ],
                   ),
                 ),
@@ -55,7 +57,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   /// 顶部导航栏
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     return SizedBox(
       height: 56,
       child: Row(
@@ -71,7 +73,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
           ),
           const Spacer(),
           Text(
-            '数据导出',
+            l10n.dataExport_,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -86,14 +88,14 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   /// "时间范围"分区
-  Widget _buildDateRangeSection(BuildContext context) {
+  Widget _buildDateRangeSection(BuildContext context, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            '时间范围',
+            l10n.dateRange,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -124,7 +126,12 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '${_startDate.year}年${_startDate.month}月 - ${_endDate.year}年${_endDate.month}月',
+                  l10n.dateRangeFormat(
+                    _startDate.year.toString(),
+                    _startDate.month.toString(),
+                    _endDate.year.toString(),
+                    _endDate.month.toString(),
+                  ),
                   style: TextStyle(
                     fontSize: 15,
                     color: AppTheme.textOnSurface(context),
@@ -145,11 +152,11 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   /// "导出内容"分区
-  Widget _buildContentTypeSection(BuildContext context) {
+  Widget _buildContentTypeSection(BuildContext context, AppLocalizations l10n) {
     final items = [
-      ('all', '所有交易'),
-      ('expense', '仅支出'),
-      ('income', '仅收入'),
+      ('all', l10n.allTransactions),
+      ('expense', l10n.expenseOnly),
+      ('income', l10n.incomeOnly),
     ];
 
     return Column(
@@ -158,7 +165,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            '导出内容',
+            l10n.exportContent,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -200,7 +207,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   /// "导出格式"分区
-  Widget _buildFormatSection(BuildContext context) {
+  Widget _buildFormatSection(BuildContext context, AppLocalizations l10n) {
     final formats = ['csv', 'pdf'];
 
     return Column(
@@ -209,7 +216,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            '导出格式',
+            l10n.exportFormat,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -302,11 +309,11 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
   }
 
   /// 导出按钮
-  Widget _buildExportButton(BuildContext context) {
+  Widget _buildExportButton(BuildContext context, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
-        onTap: _showExportSuccess,
+        onTap: () => _showExportSuccess(l10n),
         child: Container(
           height: 52,
           decoration: BoxDecoration(
@@ -327,7 +334,7 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '导出并分享',
+                l10n.exportAndShare,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -341,8 +348,8 @@ class _DataExportScreenState extends ConsumerState<DataExportScreen> {
     );
   }
 
-  void _showExportSuccess() {
+  void _showExportSuccess(AppLocalizations l10n) {
     TopNotification.show(context,
-        message: '导出成功', type: TopNotificationType.success);
+        message: l10n.exportSuccess, type: TopNotificationType.success);
   }
 }

@@ -9,8 +9,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:timi/data/database/daos/transaction_dao.dart';
 import 'package:timi/core/router/app_router.dart';
+import 'package:timi/data/database/daos/transaction_dao.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
@@ -103,9 +104,10 @@ class _BudgetAlertWatcherState extends ConsumerState<BudgetAlertWatcher> {
     // 计算超支比例
     final overRatio =
         (summary.totalExpense / _budgetAmount! - 1) * 100;
+    final l10n = AppLocalizations.of(context);
     final message = overRatio > 50
-        ? '本月预算已超支 ${overRatio.toStringAsFixed(0)}%！'
-        : '本月预算已超支！';
+        ? '${l10n.monthOverspentLabel} ${overRatio.toStringAsFixed(0)}%！'
+        : '${l10n.monthOverspentLabel}！';
 
     // 从顶部弹出磨砂玻璃通知
     // 使用 rootNavigatorKey 获取 Overlay（BudgetAlertWatcher 位于 MaterialApp 上方，

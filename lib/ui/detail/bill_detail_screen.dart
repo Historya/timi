@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
+import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/ui/shared/icon_helpers.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
@@ -28,14 +29,18 @@ final billDetailProvider = FutureProvider.autoDispose
       return BillDetailData(transaction: transaction, category: category);
     });
 
-/// 格式化日期："1月15日 14:30"
-String _formatDate(DateTime dt) {
-  return '${dt.month}月${dt.day}日 '
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+/// 格式化日期：使用 l10n 生成国际化日期格式
+String _formatDate(DateTime dt, AppLocalizations l10n) {
+  return l10n.dateFormatDetail(
+    dt.month.toString(),
+    dt.day.toString(),
+    dt.hour.toString().padLeft(2, '0'),
+    dt.minute.toString().padLeft(2, '0'),
+  );
 }
 
-/// 类型中文映射
-String _typeLabel(String type) => type == 'income' ? '收入' : '支出';
+/// 类型标签
+String _typeLabel(String type, AppLocalizations l10n) => type == 'income' ? l10n.incomeLabel : l10n.expenseLabel;
 
 class BillDetailScreen extends ConsumerWidget {
   final int id;
@@ -44,6 +49,7 @@ class BillDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final detailAsync = ref.watch(billDetailProvider(id));
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: Theme.of(context).brightness == Brightness.dark
@@ -57,7 +63,7 @@ class BillDetailScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  '加载失败：$e',
+                  l10n.errorLoading(e.toString()),
                   style: TextStyle(
                     color: AppTheme.textOnSurface(
                       context,
@@ -68,7 +74,7 @@ class BillDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            data: (data) => _buildContent(context, ref, data),
+            data: (data) => _buildContent(context, ref, data, l10n),
           ),
         ),
       ),
@@ -80,12 +86,13 @@ class BillDetailScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     BillDetailData data,
+    AppLocalizations l10n,
   ) {
     final txn = data.transaction;
     final cat = data.category;
     return Column(
       children: [
-        const _Header(),
+        _Header(l10n: l10n),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -101,27 +108,29 @@ class BillDetailScreen extends ConsumerWidget {
                 _DetailCard(
                   categoryName: cat.name,
                   date: txn.date,
-                  typeLabel: _typeLabel(txn.type),
+                  typeLabel: _typeLabel(txn.type, l10n),
                   note: txn.note,
+                  l10n: l10n,
                 ),
                 const SizedBox(height: 24),
                 _ActionButtons(
+                  l10n: l10n,
                   onDelete: () {
                     if (txn.date.month != DateTime.now().month) {
                       TopNotification.show(
                         context,
-                        message: '该账目不在记账期间内',
+                        message: l10n.notInCurrentMonth,
                         type: TopNotificationType.warning,
                       );
                       return;
                     }
-                    _delete(context, ref, txn.id);
+                    _delete(context, ref, txn.id, l10n);
                   },
                   onEdit: () {
                     if (txn.date.month != DateTime.now().month) {
                       TopNotification.show(
                         context,
-                        message: '该账目不在记账期间内',
+                        message: l10n.notInCurrentMonth,
                         type: TopNotificationType.warning,
                       );
                       return;
@@ -142,17 +151,17 @@ class BillDetailScreen extends ConsumerWidget {
   }
 
   /// 删除确认弹窗
-  Future<void> _delete(BuildContext context, WidgetRef ref, int id) async {
+  Future<void> _delete(BuildContext context, WidgetRef ref, int id, AppLocalizations l10n) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).scaffoldBackgroundColor,
         title: Text(
-          '删除交易',
+          l10n.deleteTransaction,
           style: TextStyle(color: AppTheme.textOnSurface(context)),
         ),
         content: Text(
-          '确定要删除这笔交易吗？',
+          l10n.deleteConfirmMessage,
           style: TextStyle(
             color: AppTheme.textOnSurface(context).withValues(alpha: 0.7),
           ),
@@ -161,7 +170,7 @@ class BillDetailScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              '取消',
+              l10n.cancel,
               style: TextStyle(
                 color: AppTheme.textOnSurface(context).withValues(alpha: 0.54),
               ),
@@ -169,7 +178,7 @@ class BillDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Color(0xFFF87171))),
+            child: Text(l10n.delete, style: const TextStyle(color: Color(0xFFF87171))),
           ),
         ],
       ),
@@ -183,7 +192,9 @@ class BillDetailScreen extends ConsumerWidget {
 
 /// 顶部导航栏：返回箭头 + 标题 + 更多菜单
 class _Header extends StatelessWidget {
-  const _Header();
+  final AppLocalizations l10n;
+
+  const _Header({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +212,7 @@ class _Header extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '账单详情',
+              l10n.billDetail,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -286,12 +297,14 @@ class _DetailCard extends StatelessWidget {
   final DateTime date;
   final String typeLabel;
   final String? note;
+  final AppLocalizations l10n;
 
   const _DetailCard({
     required this.categoryName,
     required this.date,
     required this.typeLabel,
     this.note,
+    required this.l10n,
   });
 
   @override
@@ -303,15 +316,15 @@ class _DetailCard extends StatelessWidget {
       decoration: AppTheme.glassDecorationFull(context: context, radius: 20),
       child: Column(
         children: [
-          _DetailRow(label: '分类', value: categoryName),
+          _DetailRow(label: l10n.category, value: categoryName),
           Divider(height: 1, color: AppTheme.glassFillStrong(context)),
-          _DetailRow(label: '日期', value: _formatDate(date)),
+          _DetailRow(label: l10n.date, value: _formatDate(date, l10n)),
           Divider(height: 1, color: AppTheme.glassFillStrong(context)),
-          _DetailRow(label: '类型', value: typeLabel),
+          _DetailRow(label: l10n.type, value: typeLabel),
           // 有备注时添加备注行
           if (hasNote) ...[
             Divider(height: 1, color: AppTheme.glassFillStrong(context)),
-            _DetailRow(label: '备注', value: note!, isLongText: true),
+            _DetailRow(label: l10n.note, value: note!, isLongText: true),
           ],
         ],
       ),
@@ -368,8 +381,9 @@ class _DetailRow extends StatelessWidget {
 class _ActionButtons extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onEdit;
+  final AppLocalizations l10n;
 
-  const _ActionButtons({required this.onDelete, this.onEdit});
+  const _ActionButtons({required this.onDelete, this.onEdit, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -386,10 +400,10 @@ class _ActionButtons extends StatelessWidget {
               fill: AppTheme.glassFillStrong(context),
               context: context,
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                '删除',
-                style: TextStyle(color: Color(0xFFF87171), fontSize: 15),
+                l10n.delete,
+                style: const TextStyle(color: Color(0xFFF87171), fontSize: 15),
               ),
             ),
           ),
@@ -407,7 +421,7 @@ class _ActionButtons extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                '编辑',
+                l10n.edit,
                 style: TextStyle(
                   color: AppTheme.textOnSurface(context),
                   fontSize: 15,
