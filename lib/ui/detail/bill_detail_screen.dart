@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -32,15 +33,15 @@ final billDetailProvider = FutureProvider.autoDispose
 /// 格式化日期：使用 l10n 生成国际化日期格式
 String _formatDate(DateTime dt, AppLocalizations l10n) {
   return l10n.dateFormatDetail(
-    dt.month.toString(),
     dt.day.toString(),
     dt.hour.toString().padLeft(2, '0'),
     dt.minute.toString().padLeft(2, '0'),
+    dt.month.toString(),
   );
 }
 
 /// 类型标签
-String _typeLabel(String type, AppLocalizations l10n) => type == 'income' ? l10n.incomeLabel : l10n.expenseLabel;
+String _typeLabel(String type, AppLocalizations l10n) => type == TransactionType.income.value ? l10n.incomeLabel : l10n.expenseLabel;
 
 class BillDetailScreen extends ConsumerWidget {
   final int id;
@@ -261,7 +262,7 @@ class _AmountText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isExpense = type == 'expense';
+    final isExpense = type == TransactionType.expense.value;
     final sign = isExpense ? '-' : '+';
     final color = isExpense ? const Color(0xFFF87171) : const Color(0xFF4ADE80);
     return Text(

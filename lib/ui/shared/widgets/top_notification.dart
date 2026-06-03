@@ -180,7 +180,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                   ),
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   decoration: BoxDecoration(
-                    color: AppTheme.glassFillStrong(context),
+                    color: AppTheme.glassFillAccent(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: AppTheme.glassStroke(context),

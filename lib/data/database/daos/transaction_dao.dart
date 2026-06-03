@@ -1,23 +1,29 @@
 import 'package:drift/drift.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import '../app_database.dart';
 
 class TransactionDao {
   final AppDatabase _db;
   TransactionDao(this._db);
 
-  Future<List<TransactionsTableData>> getAll() => _db.select(_db.transactionsTable).get();
+  Future<List<TransactionsTableData>> getAll() =>
+      _db.select(_db.transactionsTable).get();
 
-  Stream<List<TransactionsTableData>> watchAll() => _db.select(_db.transactionsTable).watch();
+  Stream<List<TransactionsTableData>> watchAll() =>
+      _db.select(_db.transactionsTable).watch();
 
   Future<TransactionsTableData> getById(int id) {
-    return (_db.select(_db.transactionsTable)..where((t) => t.id.equals(id))).getSingle();
+    return (_db.select(
+      _db.transactionsTable,
+    )..where((t) => t.id.equals(id))).getSingle();
   }
 
   /// 统计引用指定分类的交易笔数
   Future<int> countByCategoryId(int categoryId) {
     return (_db.select(_db.transactionsTable)
-      ..where((t) => t.categoryId.equals(categoryId))
-    ).get().then((rows) => rows.length);
+          ..where((t) => t.categoryId.equals(categoryId)))
+        .get()
+        .then((rows) => rows.length);
   }
 
   Future<int> insert(TransactionsTableCompanion entry) {
@@ -29,28 +35,41 @@ class TransactionDao {
   }
 
   Future<int> delete(int id) {
-    return (_db.delete(_db.transactionsTable)..where((t) => t.id.equals(id))).go();
+    return (_db.delete(
+      _db.transactionsTable,
+    )..where((t) => t.id.equals(id))).go();
   }
 
   Stream<List<TransactionsTableData>> watchByMonth(int year, int month) {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
     return (_db.select(_db.transactionsTable)
-      ..where((t) => t.date.isBetween(Variable(start), Variable(end)))
-      ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)])
-    ).watch();
+          ..where((t) => t.date.isBiggerOrEqual(Variable(start)))
+          ..where((t) => t.date.isSmallerThan(Variable(end)))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+          ]))
+        .watch();
   }
 
   Stream<List<TransactionsTableData>> watchByType(String type) {
     return (_db.select(_db.transactionsTable)
-      ..where((t) => t.type.equals(type))
-      ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)])
-    ).watch();
+          ..where((t) => t.type.equals(type))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+          ]))
+        .watch();
   }
 
-  Stream<List<TransactionsTableData>> search(String keyword, {String? type, int? categoryId}) {
+  Stream<List<TransactionsTableData>> search(
+    String keyword, {
+    String? type,
+    int? categoryId,
+  }) {
     var query = _db.select(_db.transactionsTable)
-      ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]);
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+      ]);
     if (type != null) query.where((t) => t.type.equals(type));
     if (categoryId != null) query.where((t) => t.categoryId.equals(categoryId));
     if (keyword.isNotEmpty) {
@@ -67,54 +86,68 @@ class TransactionDao {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
     return (_db.select(_db.transactionsTable)
-      ..where((t) => t.date.isBetween(Variable(start), Variable(end)))
-    ).watch().map((transactions) {
-      // 在 Dart 侧计算汇总，而非 SQL 聚合
-      double totalExpense = 0;
-      double totalIncome = 0;
-      for (final t in transactions) {
-        if (t.type == 'expense') {
-          totalExpense += t.amount;
-        } else {
-          totalIncome += t.amount;
-        }
-      }
-      return MonthlySummary(
-        totalExpense: totalExpense,
-        totalIncome: totalIncome,
-        totalCount: transactions.length,
-      );
-    });
+          ..where((t) => t.date.isBiggerOrEqual(Variable(start)))
+          ..where((t) => t.date.isSmallerThan(Variable(end))))
+        .watch()
+        .map((transactions) {
+          // 在 Dart 侧计算汇总，而非 SQL 聚合
+          double totalExpense = 0;
+          double totalIncome = 0;
+          for (final t in transactions) {
+            if (t.type == TransactionType.expense.value) {
+              totalExpense += t.amount;
+            } else {
+              totalIncome += t.amount;
+            }
+          }
+          return MonthlySummary(
+            totalExpense: totalExpense,
+            totalIncome: totalIncome,
+            totalCount: transactions.length,
+          );
+        });
   }
 
   /// 按月获取每日支出汇总（响应式）
   Stream<List<DailyTotal>> watchDailyTotals(int year, int month) {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
-    return _db.customSelect(
-      '''
-      SELECT CAST(strftime('%d', date / 1000, 'unixepoch') AS INTEGER) as day,
+    return _db
+        .customSelect(
+          '''
+      SELECT CAST(strftime('%d', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as day,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
-      WHERE date >= ? AND date < ? AND type = 'expense'
+      WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'
       GROUP BY day
       ORDER BY day
       ''',
-      variables: [Variable(start), Variable(end)],
-    ).watch().map((rows) {
-      return rows.map((row) => DailyTotal(
-        day: row.read<int>('day'),
-        total: row.read<double>('total'),
-      )).toList();
-    });
+          variables: [Variable(start), Variable(end)],
+        )
+        .watch()
+        .map((rows) {
+          return rows
+              .map(
+                (row) => DailyTotal(
+                  day: row.read<int>('day'),
+                  total: row.read<double>('total'),
+                ),
+              )
+              .toList();
+        });
   }
 
   /// 按月按类型获取分类排行（响应式）
-  Stream<List<CategoryRanking>> watchCategoryRanking(int year, int month, String type) {
+  Stream<List<CategoryRanking>> watchCategoryRanking(
+    int year,
+    int month,
+    String type,
+  ) {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
-    return _db.customSelect(
-      '''
+    return _db
+        .customSelect(
+          '''
       SELECT category_id,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
@@ -122,54 +155,101 @@ class TransactionDao {
       GROUP BY category_id
       ORDER BY total DESC
       ''',
-      variables: [Variable(start), Variable(end), Variable(type)],
-    ).watch().map((rows) {
-      return rows.map((row) => CategoryRanking(
-        categoryId: row.read<int>('category_id'),
-        total: row.read<double>('total'),
-      )).toList();
-    });
+          variables: [Variable(start), Variable(end), Variable(type)],
+        )
+        .watch()
+        .map((rows) {
+          return rows
+              .map(
+                (row) => CategoryRanking(
+                  categoryId: row.read<int>('category_id'),
+                  total: row.read<double>('total'),
+                ),
+              )
+              .toList();
+        });
   }
 
   /// 获取指定年份 1-12 月每月的支出汇总（响应式）
   Stream<List<MonthlyTotal>> watchYearlyMonthlyTotals(int year) {
     final start = DateTime(year, 1, 1);
     final end = DateTime(year + 1, 1, 1);
-    return _db.customSelect(
+    return _db
+        .customSelect(
+          '''
+          SELECT CAST(strftime('%m', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month,
+                COALESCE(SUM(amount), 0) as total
+          FROM transactions_table
+          WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'
+          GROUP BY month
+          ORDER BY month
+          ''',
+          variables: [Variable(start), Variable(end)],
+        )
+        .watch()
+        .map((rows) {
+          // 建立当月实际有数据月份的映射
+          final monthMap = {
+            for (var row in rows)
+              row.read<int>('month'): row.read<double>('total'),
+          };
+          // 填充全部12个月，无数据的月份补0
+          return List.generate(
+            12,
+            (i) => MonthlyTotal(month: i + 1, total: monthMap[i + 1] ?? 0),
+          );
+        });
+  }
+
+  /// 调试专用：获取 SQL 原始行（month, total），用于验证时区/分组是否正确
+  Future<List<Map<String, Object>>> fetchYearlyMonthlyRaw(int year) async {
+    final start = DateTime(year, 1, 1);
+    final end = DateTime(year + 1, 1, 1);
+    final rows = await _db.customSelect(
       '''
-      SELECT CAST(strftime('%m', date / 1000, 'unixepoch') AS INTEGER) as month,
+      SELECT CAST(strftime('%m', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
-      WHERE date >= ? AND date < ? AND type = 'expense'
+      WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'
       GROUP BY month
       ORDER BY month
       ''',
       variables: [Variable(start), Variable(end)],
-    ).watch().map((rows) {
-      // 建立当月实际有数据月份的映射
-      final monthMap = {
-        for (var row in rows) row.read<int>('month'): row.read<double>('total'),
-      };
-      // 填充全部12个月，无数据的月份补0
-      return List.generate(12, (i) => MonthlyTotal(
-        month: i + 1,
-        total: monthMap[i + 1] ?? 0,
-      ));
-    });
+    ).get();
+
+    return rows
+        .map((r) => {'month': r.read<int>('month'), 'total': r.read<double>('total')})
+        .toList();
+  }
+
+  /// 按日期范围获取交易记录（非响应式，用于导出等一次性操作）
+  Future<List<TransactionsTableData>> getByDateRange(
+    DateTime start,
+    DateTime end,
+  ) {
+    return (_db.select(_db.transactionsTable)
+          ..where((t) => t.date.isBiggerOrEqual(Variable(start)))
+          ..where((t) => t.date.isSmallerThan(Variable(end)))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+          ]))
+        .get();
   }
 
   /// 按月按类型获取总金额（非响应式）
   Future<double> getMonthlyTotalByType(int year, int month, String type) async {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);
-    final result = await _db.customSelect(
-      '''
+    final result = await _db
+        .customSelect(
+          '''
       SELECT COALESCE(SUM(amount), 0) as total
       FROM transactions_table
       WHERE date >= ? AND date < ? AND type = ?
       ''',
-      variables: [Variable(start), Variable(end), Variable(type)],
-    ).getSingle();
+          variables: [Variable(start), Variable(end), Variable(type)],
+        )
+        .getSingle();
     return result.read<double>('total');
   }
 }

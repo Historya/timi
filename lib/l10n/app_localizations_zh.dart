@@ -494,6 +494,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportAndShare => '导出并分享';
 
   @override
+  String get exporting => '导出中…';
+
+  @override
   String get allTransactions => '所有交易';
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/ui_providers.dart';
@@ -270,12 +271,13 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 计算本月收入总额
+    // 计算本月收入总额
     final totalIncome = transactions
-        .where((t) => t.type == 'income')
+        .where((t) => t.type == TransactionType.income.value)
         .fold<double>(0, (sum, t) => sum + t.amount);
     // 计算本月支出总额
     final totalExpense = transactions
-        .where((t) => t.type == 'expense')
+        .where((t) => t.type == TransactionType.expense.value)
         .fold<double>(0, (sum, t) => sum + t.amount);
 
     // 按日期分组整理
@@ -490,7 +492,7 @@ class _BillItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isExpense = transaction.type == 'expense';
+    final isExpense = transaction.type == TransactionType.expense.value;
     // 支出红色 / 收入绿色
     final amountColor = isExpense
         ? const Color(0xFFF87171)

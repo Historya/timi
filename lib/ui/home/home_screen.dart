@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/providers/ui_providers.dart';
@@ -505,7 +506,7 @@ class _TransactionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isExpense = transaction.type == 'expense';
+    final isExpense = transaction.type == TransactionType.expense.value;
     final Color amountColor = isExpense
         ? const Color(0xFFF87171)
         : AppTheme.accentGreen;

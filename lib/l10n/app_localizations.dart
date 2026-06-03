@@ -1028,6 +1028,12 @@ abstract class AppLocalizations {
   /// **'Export & Share'**
   String get exportAndShare;
 
+  /// No description provided for @exporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting…'**
+  String get exporting;
+
   /// No description provided for @allTransactions.
   ///
   /// In en, this message translates to:

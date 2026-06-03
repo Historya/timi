@@ -1,4 +1,4 @@
-package com.example.timi
+package com.ls.timi
 
 import io.flutter.embedding.android.FlutterActivity
 

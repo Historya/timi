@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:record/record.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -1123,8 +1124,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     return categoriesAsync.when(
       data: (categories) {
+        // 筛选支出类型分类（语音输入默认创建支出账单）
         final expenseCategories = categories
-            .where((c) => c.type == 'expense')
+            .where((c) => c.type == TransactionType.expense.value)
             .toList();
 
         // 如果当前选中的是 AI 推荐新分类（数据库中不存在），

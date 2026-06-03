@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/filter_type.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -50,7 +52,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
   String _keyword = '';
-  String _activeFilterValue = 'all';
+  String _activeFilterValue = FilterType.all.value;
   Timer? _debounceTimer;
 
   @override
@@ -90,24 +92,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final catMap = {for (final c in categories) c.id: c};
     // 筛选栏选项
     final filterOptions = <_FilterOption>[
-      _FilterOption('all', l10n.all),
-      _FilterOption('expense', l10n.expenseLabel),
-      _FilterOption('income', l10n.incomeLabel),
-      ...categories.map((c) => _FilterOption('cat_${c.id}', c.name)),
+      _FilterOption(FilterType.all.value, l10n.all),
+      _FilterOption(FilterType.expense.value, l10n.expenseLabel),
+      _FilterOption(FilterType.income.value, l10n.incomeLabel),
+      ...categories.map((c) => _FilterOption('${FilterType.categoryPrefix}${c.id}', c.name)),
     ];
 
     // 当前是否有活跃搜索条件
-    final hasActiveSearch = _keyword.isNotEmpty || _activeFilterValue != 'all';
+    final hasActiveSearch = _keyword.isNotEmpty || _activeFilterValue != FilterType.all.value;
 
     // 解析当前筛选参数传给 DAO
     String? searchType;
     int? searchCategoryId;
-    if (_activeFilterValue == 'expense') {
-      searchType = 'expense';
-    } else if (_activeFilterValue == 'income') {
-      searchType = 'income';
-    } else if (_activeFilterValue.startsWith('cat_')) {
-      final id = int.tryParse(_activeFilterValue.substring(4));
+    if (_activeFilterValue == FilterType.expense.value) {
+      searchType = TransactionType.expense.value;
+    } else if (_activeFilterValue == FilterType.income.value) {
+      searchType = TransactionType.income.value;
+    } else if (_activeFilterValue.startsWith(FilterType.categoryPrefix)) {
+      final id = int.tryParse(_activeFilterValue.substring(FilterType.categoryPrefix.length));
       if (id != null) searchCategoryId = id;
     }
 
@@ -403,7 +405,7 @@ class _SearchResultItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isExpense = transaction.type == 'expense';
+    final isExpense = transaction.type == TransactionType.expense.value;
     final amountColor = isExpense
         ? const Color(0xFFF87171)
         : AppTheme.accentGreen;

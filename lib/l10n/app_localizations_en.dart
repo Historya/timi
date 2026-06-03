@@ -501,6 +501,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportAndShare => 'Export & Share';
 
   @override
+  String get exporting => 'Exporting…';
+
+  @override
   String get allTransactions => 'All Transactions';
 
   @override

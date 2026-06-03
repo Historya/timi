@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -46,7 +47,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     // 编辑模式：用已有交易数据预填表单
     final existing = widget.existingTransaction;
     if (existing != null) {
-      _type = existing.type;
+      _type = existing.type; // 从数据库读取，值为 TransactionType 的 value
       _amountController.text = existing.amount.toStringAsFixed(2);
       _noteController.text = existing.note ?? '';
       _selectedDate = existing.date;
@@ -54,7 +55,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _preselectCategory(existing.categoryId));
     } else {
       // 新建模式：从外部参数初始化交易类型
-      _type = widget.initialType ?? 'expense';
+      _type = widget.initialType ?? TransactionType.expense.value;
       _selectedDate = DateTime.now();
     }
   }
@@ -146,7 +147,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
 
     // 支出类型时查询当月预算剩余额度并弹出通知
-    if (_type == 'expense' && mounted) {
+    if (_type == TransactionType.expense.value && mounted) {
       await _showBudgetRemainingNotification();
     }
 
@@ -246,9 +247,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   String _buildTitle() {
     final l10n = AppLocalizations.of(context);
     if (widget.existingTransaction != null) {
-      return _type == 'expense' ? l10n.editExpense : l10n.editIncome;
+      return _type == TransactionType.expense.value ? l10n.editExpense : l10n.editIncome;
     }
-    return _type == 'expense' ? l10n.addExpense : l10n.addIncome;
+    return _type == TransactionType.expense.value ? l10n.addExpense : l10n.addIncome;
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -293,7 +294,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   Widget _buildTypeToggle(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isExpense = _type == 'expense';
+    final isExpense = _type == TransactionType.expense.value;
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.glassFillStrong(context),
@@ -304,7 +305,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _type = 'expense'),
+              onTap: () => setState(() => _type = TransactionType.expense.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -334,7 +335,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _type = 'income'),
+              onTap: () => setState(() => _type = TransactionType.income.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),

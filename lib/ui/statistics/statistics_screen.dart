@@ -134,13 +134,13 @@ class _PeriodButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     // 当前周期模式
     final periodType = ref.watch(periodTypeProvider);
-    // 按钮显示点击后的目标模式（而非当前模式）
+    // 按钮显示点击后的目标模式文字
     final label = periodType == 'week' ? l10n.month : l10n.week;
     return GestureDetector(
       onTap: () {
-        // 周/月模式切换
-        final next = periodType == 'week' ? l10n.month : l10n.week;
-        ref.read(periodTypeProvider.notifier).state = next;
+        // 周/月模式切换，仅保存内部类型标识
+        final nextType = periodType == 'week' ? 'month' : 'week';
+        ref.read(periodTypeProvider.notifier).state = nextType;
       },
       child: Container(
         width: 80,

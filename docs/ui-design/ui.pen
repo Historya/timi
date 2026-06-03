@@ -1,14 +1,14 @@
 {
-  "version": "2.11",
+  "version": "2.13",
   "children": [
     {
       "type": "frame",
       "id": "biTkt",
-      "x": -402,
-      "y": -452,
+      "x": -394,
+      "y": -494,
       "name": "Canvas Background",
-      "width": 4456,
-      "height": 4774,
+      "width": 3564,
+      "height": 4816,
       "fill": {
         "type": "gradient",
         "gradientType": "linear",
@@ -73,13 +73,6 @@
           "fontFamily": "Inter",
           "fontSize": 11,
           "fontWeight": "normal"
-        },
-        {
-          "type": "rectangle",
-          "id": "EtI3D",
-          "fill": "#CCCCCC",
-          "width": 214,
-          "height": 357
         }
       ]
     },
@@ -225,11 +218,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -299,13 +289,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "nqEpM",
                       "name": "notifIcon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "bell",
-                      "iconFontFamily": "phosphor",
+                      "icon": "bell",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -319,10 +309,9 @@
               "width": "fill_container",
               "fill": "#ffffff26",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff40"
-              },
+              "stroke": "#ffffff40",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -471,10 +460,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -516,13 +504,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "DAr3q",
                           "name": "txn1Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "shopping-cart",
-                          "iconFontFamily": "phosphor",
+                          "icon": "shopping-cart",
+                          "library": "phosphor",
                           "fill": "#F87171"
                         }
                       ]
@@ -600,13 +588,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "hWfkf",
                           "name": "txn2Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "money",
-                          "iconFontFamily": "phosphor",
+                          "icon": "money",
+                          "library": "phosphor",
                           "fill": "#4ADE80"
                         }
                       ]
@@ -684,13 +672,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "G205IJ",
                           "name": "txn3Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "taxi",
-                          "iconFontFamily": "phosphor",
+                          "icon": "taxi",
+                          "library": "phosphor",
                           "fill": "#FBBF24"
                         }
                       ]
@@ -768,13 +756,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "U7RTEH",
                           "name": "txn4Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "coffee",
-                          "iconFontFamily": "phosphor",
+                          "icon": "coffee",
+                          "library": "phosphor",
                           "fill": "#818CF8"
                         }
                       ]
@@ -826,6 +814,20 @@
             },
             {
               "type": "frame",
+              "id": "KSzf2",
+              "name": "Header",
+              "width": "fill_container",
+              "height": 64,
+              "fill": "#00000000",
+              "padding": [
+                0,
+                24
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center"
+            },
+            {
+              "type": "frame",
               "id": "RxkJ0",
               "name": "Tab Bar Container",
               "width": "fill_container",
@@ -845,10 +847,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -882,13 +883,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "O3HUQ1",
                           "name": "tab1Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#FFFFFF"
                         },
                         {
@@ -918,13 +919,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "cmojo",
                           "name": "tab2Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -954,13 +955,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "BSnQF",
                           "name": "tab3Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -990,13 +991,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "p76EG",
                           "name": "tab4Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -1044,60 +1045,6 @@
           "height": 5,
           "fill": "#ffffff26",
           "cornerRadius": 2.5
-        },
-        {
-          "type": "frame",
-          "id": "YG4GL",
-          "x": 279,
-          "y": 613,
-          "name": "FAB Plus Button",
-          "metadata": {
-            "type": "interaction",
-            "trigger": "tap",
-            "action": "navigate",
-            "target": "mH0UD",
-            "targetName": "语音输入",
-            "transition": "slide_up",
-            "description": "浮动按钮-打开语音记账"
-          },
-          "width": 60,
-          "height": 60,
-          "fill": "#ffffff33",
-          "cornerRadius": 30,
-          "stroke": {
-            "thickness": 1.5,
-            "fill": "#ffffff59"
-          },
-          "effect": [
-            {
-              "type": "background_blur",
-              "radius": 20
-            },
-            {
-              "type": "shadow",
-              "shadowType": "outer",
-              "color": "#00000033",
-              "offset": {
-                "x": 0,
-                "y": 6
-              },
-              "blur": 24
-            }
-          ],
-          "justifyContent": "center",
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "icon_font",
-              "id": "ErVBD",
-              "name": "FAB Mic Icon",
-              "width": 26,
-              "height": 26,
-              "iconFontName": "plus",
-              "iconFontFamily": "phosphor",
-              "fill": "#FFFFFF"
-            }
-          ]
         }
       ]
     },
@@ -1111,11 +1058,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -1223,13 +1167,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "pDjMh",
                   "name": "vCloseIcon",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "x",
-                  "iconFontFamily": "phosphor",
+                  "icon": "x",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 }
               ]
@@ -1242,27 +1186,26 @@
               "fill": "#FFFFFF0F",
               "cornerRadius": 20,
               "stroke": {
-                "thickness": 1,
-                "fill": {
-                  "type": "gradient",
-                  "gradientType": "linear",
-                  "enabled": true,
-                  "rotation": 90,
-                  "size": {
-                    "height": 1
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 90,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "#ffffff33",
+                    "position": 0
                   },
-                  "colors": [
-                    {
-                      "color": "#ffffff33",
-                      "position": 0
-                    },
-                    {
-                      "color": "#ffffff14",
-                      "position": 1
-                    }
-                  ]
-                }
+                  {
+                    "color": "#ffffff14",
+                    "position": 1
+                  }
+                ]
               },
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -1334,10 +1277,9 @@
                   "height": 52,
                   "fill": "#FFFFFF26",
                   "cornerRadius": 26,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#FFFFFF40"
-                  },
+                  "stroke": "#FFFFFF40",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -1358,13 +1300,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "V1f1x",
                       "name": "checkIcon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "check",
-                      "iconFontFamily": "phosphor",
+                      "icon": "check",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -1387,10 +1329,9 @@
                   "height": 48,
                   "fill": "#FFFFFF0D",
                   "cornerRadius": 24,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#FFFFFF26"
-                  },
+                  "stroke": "#FFFFFF26",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -1461,8 +1402,8 @@
           "name": "Home Background",
           "opacity": 0.3,
           "clip": true,
-          "width": 375,
-          "height": 837,
+          "width": 376,
+          "height": 832,
           "fill": "#ffffff00",
           "effect": {
             "type": "background_blur",
@@ -1511,13 +1452,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "m8O1Q",
                       "name": "notifIcon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "bell",
-                      "iconFontFamily": "phosphor",
+                      "icon": "bell",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -1531,10 +1472,9 @@
               "width": "fill_container",
               "fill": "#ffffff26",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff40"
-              },
+              "stroke": "#ffffff40",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -1683,10 +1623,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -1728,13 +1667,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "g2gsZu",
                           "name": "txn1Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "shopping-cart",
-                          "iconFontFamily": "phosphor",
+                          "icon": "shopping-cart",
+                          "library": "phosphor",
                           "fill": "#F87171"
                         }
                       ]
@@ -1812,13 +1751,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "KkCi3",
                           "name": "txn2Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "money",
-                          "iconFontFamily": "phosphor",
+                          "icon": "money",
+                          "library": "phosphor",
                           "fill": "#4ADE80"
                         }
                       ]
@@ -1896,13 +1835,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "hJH4w",
                           "name": "txn3Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "taxi",
-                          "iconFontFamily": "phosphor",
+                          "icon": "taxi",
+                          "library": "phosphor",
                           "fill": "#FBBF24"
                         }
                       ]
@@ -1980,13 +1919,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "sNCvH",
                           "name": "txn4Icon",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "coffee",
-                          "iconFontFamily": "phosphor",
+                          "icon": "coffee",
+                          "library": "phosphor",
                           "fill": "#818CF8"
                         }
                       ]
@@ -2057,10 +1996,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -2094,13 +2032,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "qHeo1",
                           "name": "tab1Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#FFFFFF"
                         },
                         {
@@ -2130,13 +2068,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "NFJBE",
                           "name": "tab2Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -2166,13 +2104,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "p4qICv",
                           "name": "tab3Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -2202,13 +2140,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "igQ0e",
                           "name": "tab4Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -2242,11 +2180,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -2312,13 +2247,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "DRbOX",
                       "name": "bSearchIcon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "magnifying-glass",
-                      "iconFontFamily": "phosphor",
+                      "icon": "magnifying-glass",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -2352,13 +2287,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "O6rmD",
                       "name": "bMonthPrevIcon",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-left",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-left",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -2385,13 +2320,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "tJNgp",
                       "name": "bMonthNextIcon",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -2405,10 +2340,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -2547,10 +2481,9 @@
                       "width": "fill_container",
                       "fill": "#ffffff14",
                       "cornerRadius": 14,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#ffffff1f"
-                      },
+                      "stroke": "#ffffff1f",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "effect": {
                         "type": "background_blur",
                         "radius": 12
@@ -2571,13 +2504,13 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "J4iZj",
                               "name": "bItemIcon1Icon",
                               "width": 18,
                               "height": 18,
-                              "iconFontName": "shopping-cart",
-                              "iconFontFamily": "phosphor",
+                              "icon": "shopping-cart",
+                              "library": "phosphor",
                               "fill": "#F87171"
                             }
                           ]
@@ -2632,10 +2565,9 @@
                       "width": "fill_container",
                       "fill": "#ffffff14",
                       "cornerRadius": 14,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#ffffff1f"
-                      },
+                      "stroke": "#ffffff1f",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "effect": {
                         "type": "background_blur",
                         "radius": 12
@@ -2656,13 +2588,13 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "Z2B1e3",
                               "name": "bItemIcon2Icon",
                               "width": 18,
                               "height": 18,
-                              "iconFontName": "money",
-                              "iconFontFamily": "phosphor",
+                              "icon": "money",
+                              "library": "phosphor",
                               "fill": "#4ADE80"
                             }
                           ]
@@ -2744,10 +2676,9 @@
                       "width": "fill_container",
                       "fill": "#ffffff14",
                       "cornerRadius": 14,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#ffffff1f"
-                      },
+                      "stroke": "#ffffff1f",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "effect": {
                         "type": "background_blur",
                         "radius": 12
@@ -2768,13 +2699,13 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "L9zKud",
                               "name": "bItemIcon3Icon",
                               "width": 18,
                               "height": 18,
-                              "iconFontName": "taxi",
-                              "iconFontFamily": "phosphor",
+                              "icon": "taxi",
+                              "library": "phosphor",
                               "fill": "#FBBF24"
                             }
                           ]
@@ -2829,10 +2760,9 @@
                       "width": "fill_container",
                       "fill": "#ffffff14",
                       "cornerRadius": 14,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#ffffff1f"
-                      },
+                      "stroke": "#ffffff1f",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "effect": {
                         "type": "background_blur",
                         "radius": 12
@@ -2853,13 +2783,13 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "LXUKa",
                               "name": "bItemIcon4Icon",
                               "width": 18,
                               "height": 18,
-                              "iconFontName": "coffee",
-                              "iconFontFamily": "phosphor",
+                              "icon": "coffee",
+                              "library": "phosphor",
                               "fill": "#818CF8"
                             }
                           ]
@@ -2938,10 +2868,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -2975,13 +2904,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "h4tdqt",
                           "name": "bTab1Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -3011,13 +2940,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "HTn5Z",
                           "name": "bTab2Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#FFFFFF"
                         },
                         {
@@ -3047,13 +2976,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "ytB6m",
                           "name": "bTab3Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -3083,13 +3012,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "M3xK3",
                           "name": "bTab4Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -3150,11 +3079,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -3216,10 +3142,9 @@
                   "height": 36,
                   "fill": "#ffffff1f",
                   "cornerRadius": 18,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff26"
-                  },
+                  "stroke": "#ffffff26",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
@@ -3244,10 +3169,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -3307,10 +3231,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 18,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -3580,10 +3503,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 18,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -3987,10 +3909,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -4024,13 +3945,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "ZtHlg",
                           "name": "sTab1Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -4060,13 +3981,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "mSFZx",
                           "name": "sTab2Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -4096,13 +4017,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "rBZzO",
                           "name": "sTab3Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#FFFFFF"
                         },
                         {
@@ -4132,13 +4053,13 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "cXuZU",
                           "name": "sTab4Icon",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -4324,11 +4245,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -4493,10 +4411,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 16
@@ -4685,12 +4602,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "G3AO7",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "fork-knife",
-                          "iconFontFamily": "phosphor",
+                          "icon": "fork-knife",
+                          "library": "phosphor",
                           "fill": "#F87171"
                         }
                       ]
@@ -4728,12 +4645,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "cGYMe",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "taxi",
-                          "iconFontFamily": "phosphor",
+                          "icon": "taxi",
+                          "library": "phosphor",
                           "fill": "#FBBF24"
                         }
                       ]
@@ -4771,12 +4688,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "HW5AH",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "shopping-bag",
-                          "iconFontFamily": "phosphor",
+                          "icon": "shopping-bag",
+                          "library": "phosphor",
                           "fill": "#818CF8"
                         }
                       ]
@@ -4814,12 +4731,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "cz11W",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "game-controller",
-                          "iconFontFamily": "phosphor",
+                          "icon": "game-controller",
+                          "library": "phosphor",
                           "fill": "#A855F7"
                         }
                       ]
@@ -4866,12 +4783,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "A6djoc",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "first-aid",
-                          "iconFontFamily": "phosphor",
+                          "icon": "first-aid",
+                          "library": "phosphor",
                           "fill": "#34D399"
                         }
                       ]
@@ -4909,12 +4826,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "j6gD6J",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "book-open",
-                          "iconFontFamily": "phosphor",
+                          "icon": "book-open",
+                          "library": "phosphor",
                           "fill": "#F97316"
                         }
                       ]
@@ -4952,12 +4869,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "lpqkD",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#0EA5E9"
                         }
                       ]
@@ -4995,12 +4912,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "y9jmC",
                           "width": 22,
                           "height": 22,
-                          "iconFontName": "dots-three",
-                          "iconFontFamily": "phosphor",
+                          "icon": "dots-three",
+                          "library": "phosphor",
                           "fill": "#ffffffcc"
                         }
                       ]
@@ -5026,10 +4943,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -5039,12 +4955,12 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "gg4G9",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "note",
-                  "iconFontFamily": "phosphor",
+                  "icon": "note",
+                  "library": "phosphor",
                   "fill": "#ffffff99"
                 },
                 {
@@ -5075,10 +4991,9 @@
               "height": 52,
               "fill": "#ffffff40",
               "cornerRadius": 26,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff4d"
-              },
+              "stroke": "#ffffff4d",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -5111,11 +5026,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -5196,12 +5108,12 @@
                   "fontWeight": "700"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "STLBw",
                   "width": 22,
                   "height": 22,
-                  "iconFontName": "gear",
-                  "iconFontFamily": "phosphor",
+                  "icon": "gear",
+                  "library": "phosphor",
                   "fill": "#ffffff99"
                 }
               ]
@@ -5223,20 +5135,19 @@
                   "height": 80,
                   "fill": "#ffffff26",
                   "cornerRadius": 40,
-                  "stroke": {
-                    "thickness": 2,
-                    "fill": "#ffffff40"
-                  },
+                  "stroke": "#ffffff40",
+                  "strokeWidth": 2,
+                  "strokeAlignment": "inner",
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "vkqLs",
                       "width": 44,
                       "height": 44,
-                      "iconFontName": "user",
-                      "iconFontFamily": "phosphor",
+                      "icon": "user",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -5278,10 +5189,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -5427,10 +5337,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -5463,12 +5372,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "n3ssl7",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "tags",
-                          "iconFontFamily": "phosphor",
+                          "icon": "tags",
+                          "library": "phosphor",
                           "fill": "#818CF8"
                         }
                       ]
@@ -5485,12 +5394,12 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "lFiu6",
                       "width": 16,
                       "height": 16,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff66"
                     }
                   ]
@@ -5528,12 +5437,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "FfHqk",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "chart-pie",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-pie",
+                          "library": "phosphor",
                           "fill": "#FBBF24"
                         }
                       ]
@@ -5550,12 +5459,12 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "d4Fopn",
                       "width": 16,
                       "height": 16,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff66"
                     }
                   ]
@@ -5593,12 +5502,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "KQOGP",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "download",
-                          "iconFontFamily": "phosphor",
+                          "icon": "download",
+                          "library": "phosphor",
                           "fill": "#34D399"
                         }
                       ]
@@ -5615,12 +5524,12 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "mOWQW",
                       "width": 16,
                       "height": 16,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff66"
                     }
                   ]
@@ -5658,12 +5567,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "xUa0G",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "gear",
-                          "iconFontFamily": "phosphor",
+                          "icon": "gear",
+                          "library": "phosphor",
                           "fill": "#0EA5E9"
                         }
                       ]
@@ -5680,12 +5589,12 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "hNgOs",
                       "width": 16,
                       "height": 16,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff66"
                     }
                   ]
@@ -5723,12 +5632,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "hUPip",
                           "width": 20,
                           "height": 20,
-                          "iconFontName": "info",
-                          "iconFontFamily": "phosphor",
+                          "icon": "info",
+                          "library": "phosphor",
                           "fill": "#ffffffcc"
                         }
                       ]
@@ -5745,12 +5654,12 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "LpC8A",
                       "width": 16,
                       "height": 16,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff66"
                     }
                   ]
@@ -5785,10 +5694,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -5822,12 +5730,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "dpnY8",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -5856,12 +5764,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "Z05rk7",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -5890,12 +5798,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "Yrcrb",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -5924,12 +5832,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "hAoav",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#FFFFFF"
                         },
                         {
@@ -5962,11 +5870,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -6038,12 +5943,12 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "B1AF9V",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -6056,12 +5961,12 @@
                   "fontWeight": "700"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "TEPUE",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "dots-three-vertical",
-                  "iconFontFamily": "phosphor",
+                  "icon": "dots-three-vertical",
+                  "library": "phosphor",
                   "fill": "#ffffff99"
                 }
               ]
@@ -6086,12 +5991,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "RbGss",
                       "width": 32,
                       "height": 32,
-                      "iconFontName": "shopping-cart",
-                      "iconFontFamily": "phosphor",
+                      "icon": "shopping-cart",
+                      "library": "phosphor",
                       "fill": "#F87171"
                     }
                   ]
@@ -6123,10 +6028,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -6274,10 +6178,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -6287,12 +6190,12 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "t481kq",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "note",
-                  "iconFontFamily": "phosphor",
+                  "icon": "note",
+                  "library": "phosphor",
                   "fill": "#ffffff99"
                 },
                 {
@@ -6315,21 +6218,20 @@
               "width": "fill_container",
               "fill": "#ffffff14",
               "cornerRadius": 14,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "gap": 8,
               "padding": 12,
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "C6J497",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "play",
-                  "iconFontFamily": "phosphor",
+                  "icon": "play",
+                  "library": "phosphor",
                   "fill": "#FBBF24"
                 },
                 {
@@ -6377,10 +6279,9 @@
                   "height": 48,
                   "fill": "#ffffff1a",
                   "cornerRadius": 24,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
@@ -6403,10 +6304,9 @@
                   "height": 48,
                   "fill": "#ffffff40",
                   "cornerRadius": 24,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff4d"
-                  },
+                  "stroke": "#ffffff4d",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": {
                     "type": "background_blur",
                     "radius": 12
@@ -6441,11 +6341,8 @@
       "height": 844,
       "fill": "#1a1a1a",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -6517,12 +6414,12 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "BWuqG",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -6545,12 +6442,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "EM3SP",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "plus",
-                      "iconFontFamily": "phosphor",
+                      "icon": "plus",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     }
                   ]
@@ -6628,10 +6525,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 18,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 14
@@ -6668,20 +6564,19 @@
                           "height": 52,
                           "fill": "#ef444433",
                           "cornerRadius": 16,
-                          "stroke": {
-                            "thickness": 1.5,
-                            "fill": "#F87171"
-                          },
+                          "stroke": "#F87171",
+                          "strokeWidth": 1.5,
+                          "strokeAlignment": "inner",
                           "justifyContent": "center",
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "q5siS0",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "fork-knife",
-                              "iconFontFamily": "phosphor",
+                              "icon": "fork-knife",
+                              "library": "phosphor",
                               "fill": "#F87171"
                             }
                           ]
@@ -6720,12 +6615,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "gpVU0",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "taxi",
-                              "iconFontFamily": "phosphor",
+                              "icon": "taxi",
+                              "library": "phosphor",
                               "fill": "#FBBF24"
                             }
                           ]
@@ -6764,12 +6659,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "V8zGMJ",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "shopping-bag",
-                              "iconFontFamily": "phosphor",
+                              "icon": "shopping-bag",
+                              "library": "phosphor",
                               "fill": "#818CF8"
                             }
                           ]
@@ -6821,12 +6716,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "K6itDR",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "game-controller",
-                              "iconFontFamily": "phosphor",
+                              "icon": "game-controller",
+                              "library": "phosphor",
                               "fill": "#A855F7"
                             }
                           ]
@@ -6865,12 +6760,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "SkDWq",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "first-aid",
-                              "iconFontFamily": "phosphor",
+                              "icon": "first-aid",
+                              "library": "phosphor",
                               "fill": "#34D399"
                             }
                           ]
@@ -6909,12 +6804,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "F8YUO",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "book-open",
-                              "iconFontFamily": "phosphor",
+                              "icon": "book-open",
+                              "library": "phosphor",
                               "fill": "#F97316"
                             }
                           ]
@@ -6966,12 +6861,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "flTKR",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "house",
-                              "iconFontFamily": "phosphor",
+                              "icon": "house",
+                              "library": "phosphor",
                               "fill": "#0EA5E9"
                             }
                           ]
@@ -7010,12 +6905,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "hb3Nx",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "wine",
-                              "iconFontFamily": "phosphor",
+                              "icon": "wine",
+                              "library": "phosphor",
                               "fill": "#F87171"
                             }
                           ]
@@ -7054,12 +6949,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "Kra58",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "dots-three",
-                              "iconFontFamily": "phosphor",
+                              "icon": "dots-three",
+                              "library": "phosphor",
                               "fill": "#ffffffcc"
                             }
                           ]
@@ -7096,10 +6991,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 18,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 14
@@ -7140,12 +7034,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "yWC5I",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "money",
-                              "iconFontFamily": "phosphor",
+                              "icon": "money",
+                              "library": "phosphor",
                               "fill": "#4ADE80"
                             }
                           ]
@@ -7184,12 +7078,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "GvA19",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "briefcase",
-                              "iconFontFamily": "phosphor",
+                              "icon": "briefcase",
+                              "library": "phosphor",
                               "fill": "#0EA5E9"
                             }
                           ]
@@ -7228,12 +7122,12 @@
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "wTAIH",
                               "width": 22,
                               "height": 22,
-                              "iconFontName": "trend-up",
-                              "iconFontFamily": "phosphor",
+                              "icon": "trend-up",
+                              "library": "phosphor",
                               "fill": "#A855F7"
                             }
                           ]
@@ -7282,10 +7176,9 @@
                   "height": 62,
                   "fill": "#ffffff26",
                   "cornerRadius": 31,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "effect": [
                     {
                       "type": "background_blur",
@@ -7319,12 +7212,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "d2AIe",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "house",
-                          "iconFontFamily": "phosphor",
+                          "icon": "house",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -7353,12 +7246,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "wMCvd",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "receipt",
-                          "iconFontFamily": "phosphor",
+                          "icon": "receipt",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -7387,12 +7280,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "niYnd",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "chart-bar",
-                          "iconFontFamily": "phosphor",
+                          "icon": "chart-bar",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -7421,12 +7314,12 @@
                       "alignItems": "center",
                       "children": [
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "xoUBH",
                           "width": 18,
                           "height": 18,
-                          "iconFontName": "user",
-                          "iconFontFamily": "phosphor",
+                          "icon": "user",
+                          "library": "phosphor",
                           "fill": "#ffffff99"
                         },
                         {
@@ -7543,11 +7436,8 @@
       "height": 844,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -7612,13 +7502,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "ZR8AM",
                   "name": "back9",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -7652,10 +7542,9 @@
               "height": 48,
               "fill": "#ffffff1f",
               "cornerRadius": 14,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff33"
-              },
+              "stroke": "#ffffff33",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -7668,13 +7557,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "jIU4c",
                   "name": "searchIcon",
                   "width": 20,
                   "height": 20,
-                  "iconFontName": "magnifying-glass",
-                  "iconFontFamily": "phosphor",
+                  "icon": "magnifying-glass",
+                  "library": "phosphor",
                   "fill": "#ffffff80"
                 },
                 {
@@ -7690,13 +7579,13 @@
                   "fontWeight": "normal"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "NSen7",
                   "name": "clearBtn",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "x-circle",
-                  "iconFontFamily": "phosphor",
+                  "icon": "x-circle",
+                  "library": "phosphor",
                   "fill": "#ffffff60"
                 }
               ]
@@ -7744,10 +7633,9 @@
                   "height": 30,
                   "fill": "#ffffff1a",
                   "cornerRadius": 15,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff26"
-                  },
+                  "stroke": "#ffffff26",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     14
@@ -7774,10 +7662,9 @@
                   "height": 30,
                   "fill": "#ffffff1a",
                   "cornerRadius": 15,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff26"
-                  },
+                  "stroke": "#ffffff26",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     14
@@ -7804,10 +7691,9 @@
                   "height": 30,
                   "fill": "#ffffff1a",
                   "cornerRadius": 15,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff26"
-                  },
+                  "stroke": "#ffffff26",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "padding": [
                     0,
                     14
@@ -7868,13 +7754,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "Gcg7U",
                       "name": "ri1_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "fork-knife",
-                      "iconFontFamily": "phosphor",
+                      "icon": "fork-knife",
+                      "library": "phosphor",
                       "fill": "#F97316"
                     },
                     {
@@ -7939,13 +7825,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "N4Dci7",
                       "name": "ri2_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "bus",
-                      "iconFontFamily": "phosphor",
+                      "icon": "bus",
+                      "library": "phosphor",
                       "fill": "#3B82F6"
                     },
                     {
@@ -8020,13 +7906,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "T3quN",
                       "name": "ri3_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "shopping-cart",
-                      "iconFontFamily": "phosphor",
+                      "icon": "shopping-cart",
+                      "library": "phosphor",
                       "fill": "#A855F7"
                     },
                     {
@@ -8106,11 +7992,8 @@
       "height": 878,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -8175,13 +8058,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "adTpn",
                   "name": "back10",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -8224,10 +8107,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -8252,13 +8134,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "TU0I3",
                       "name": "r3_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "currency-circle-dollar",
-                      "iconFontFamily": "phosphor",
+                      "icon": "currency-circle-dollar",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8284,13 +8166,13 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "djSle",
                       "name": "r3_arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8317,13 +8199,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "BVn8q",
                       "name": "r4_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "folder",
-                      "iconFontFamily": "phosphor",
+                      "icon": "folder",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8349,13 +8231,13 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "C8fKRK",
                       "name": "r4_arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8382,13 +8264,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "jU2OA",
                       "name": "r5_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "bell",
-                      "iconFontFamily": "phosphor",
+                      "icon": "bell",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8447,10 +8329,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -8475,13 +8356,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "HRa8P",
                       "name": "r6_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "moon",
-                      "iconFontFamily": "phosphor",
+                      "icon": "moon",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8543,13 +8424,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "n0T4C",
                       "name": "r7_icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "translate",
-                      "iconFontFamily": "phosphor",
+                      "icon": "translate",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8575,13 +8456,13 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "sH9iw",
                       "name": "r7_arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8603,10 +8484,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -8630,12 +8510,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "g9StI",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "microphone",
-                      "iconFontFamily": "phosphor",
+                      "icon": "microphone",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8659,12 +8539,12 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "UUeoP",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8689,12 +8569,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "PY4DN",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "key",
-                      "iconFontFamily": "phosphor",
+                      "icon": "key",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8718,12 +8598,12 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "IRqM8",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8745,10 +8625,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -8772,12 +8651,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "wY7Ev",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "magic-wand",
-                      "iconFontFamily": "phosphor",
+                      "icon": "magic-wand",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8801,12 +8680,12 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "rSzYx",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8831,12 +8710,12 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "u7R7h",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "key",
-                      "iconFontFamily": "phosphor",
+                      "icon": "key",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -8860,12 +8739,12 @@
                       "fontWeight": "normal"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "lUxnh",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -8930,11 +8809,8 @@
       "height": 844,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -8999,13 +8875,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "hbwxw",
                   "name": "back11",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -9038,10 +8914,9 @@
               "width": "fill_container",
               "fill": "#ffffff1f",
               "cornerRadius": 20,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff40"
-              },
+              "stroke": "#ffffff40",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": [
                 {
                   "type": "background_blur",
@@ -9091,13 +8966,13 @@
                       "fontWeight": "700"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "y5Bms",
                       "name": "editIcon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "pencil-simple",
-                      "iconFontFamily": "phosphor",
+                      "icon": "pencil-simple",
+                      "library": "phosphor",
                       "fill": "#ffffff80"
                     }
                   ]
@@ -9218,10 +9093,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -9242,13 +9116,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "dzdkm",
                       "name": "cat1icon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "fork-knife",
-                      "iconFontFamily": "phosphor",
+                      "icon": "fork-knife",
+                      "library": "phosphor",
                       "fill": "#F97316"
                     },
                     {
@@ -9313,13 +9187,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "fExr6",
                       "name": "cat2icon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "bus",
-                      "iconFontFamily": "phosphor",
+                      "icon": "bus",
+                      "library": "phosphor",
                       "fill": "#3B82F6"
                     },
                     {
@@ -9384,13 +9258,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "jHjJj",
                       "name": "cat3icon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "shopping-cart",
-                      "iconFontFamily": "phosphor",
+                      "icon": "shopping-cart",
+                      "library": "phosphor",
                       "fill": "#A855F7"
                     },
                     {
@@ -9455,13 +9329,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "sndPt",
                       "name": "cat4icon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "game-controller",
-                      "iconFontFamily": "phosphor",
+                      "icon": "game-controller",
+                      "library": "phosphor",
                       "fill": "#F59E0B"
                     },
                     {
@@ -9543,11 +9417,8 @@
       "height": 844,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -9612,13 +9483,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "S0uyg",
                   "name": "back12",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -9662,10 +9533,9 @@
               "height": 52,
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -9678,13 +9548,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "oml3N",
                   "name": "calIcon",
                   "width": 22,
                   "height": 22,
-                  "iconFontName": "calendar",
-                  "iconFontFamily": "phosphor",
+                  "icon": "calendar",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -9700,13 +9570,13 @@
                   "fontWeight": "500"
                 },
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "nMO8H",
                   "name": "dateArrow",
                   "width": 18,
                   "height": 18,
-                  "iconFontName": "caret-down",
-                  "iconFontFamily": "phosphor",
+                  "icon": "caret-down",
+                  "library": "phosphor",
                   "fill": "#ffffff60"
                 }
               ]
@@ -9728,10 +9598,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -9820,10 +9689,9 @@
                       "height": 22,
                       "fill": "#00000000",
                       "cornerRadius": 11,
-                      "stroke": {
-                        "thickness": 2,
-                        "fill": "#ffffff60"
-                      }
+                      "stroke": "#ffffff60",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner"
                     },
                     {
                       "type": "text",
@@ -9868,10 +9736,9 @@
                       "height": 22,
                       "fill": "#00000000",
                       "cornerRadius": 11,
-                      "stroke": {
-                        "thickness": 2,
-                        "fill": "#ffffff60"
-                      }
+                      "stroke": "#ffffff60",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner"
                     },
                     {
                       "type": "text",
@@ -9906,10 +9773,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -9998,10 +9864,9 @@
                       "height": 22,
                       "fill": "#00000000",
                       "cornerRadius": 11,
-                      "stroke": {
-                        "thickness": 2,
-                        "fill": "#ffffff60"
-                      }
+                      "stroke": "#ffffff60",
+                      "strokeWidth": 2,
+                      "strokeAlignment": "inner"
                     },
                     {
                       "type": "text",
@@ -10027,10 +9892,9 @@
               "height": 52,
               "fill": "#ffffff40",
               "cornerRadius": 26,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff4d"
-              },
+              "stroke": "#ffffff4d",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -10040,13 +9904,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "Wvkvc",
                   "name": "exportIcon",
                   "width": 22,
                   "height": 22,
-                  "iconFontName": "download-simple",
-                  "iconFontFamily": "phosphor",
+                  "icon": "download-simple",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -10094,11 +9958,8 @@
       "height": 844,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -10163,13 +10024,13 @@
               "alignItems": "center",
               "children": [
                 {
-                  "type": "icon_font",
+                  "type": "icon",
                   "id": "z9K1QS",
                   "name": "back13",
                   "width": 24,
                   "height": 24,
-                  "iconFontName": "arrow-left",
-                  "iconFontFamily": "phosphor",
+                  "icon": "arrow-left",
+                  "library": "phosphor",
                   "fill": "#FFFFFF"
                 },
                 {
@@ -10220,13 +10081,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "Fj0Dc",
                       "name": "appIconInner",
                       "width": 40,
                       "height": 40,
-                      "iconFontName": "currency-circle-dollar",
-                      "iconFontFamily": "phosphor",
+                      "icon": "currency-circle-dollar",
+                      "library": "phosphor",
                       "fill": "#4ADE80"
                     }
                   ]
@@ -10270,10 +10131,9 @@
               "width": "fill_container",
               "fill": "#ffffff1a",
               "cornerRadius": 16,
-              "stroke": {
-                "thickness": 1,
-                "fill": "#ffffff26"
-              },
+              "stroke": "#ffffff26",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "effect": {
                 "type": "background_blur",
                 "radius": 12
@@ -10298,13 +10158,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "SPb83",
                       "name": "ar1icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "note",
-                      "iconFontFamily": "phosphor",
+                      "icon": "note",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -10320,13 +10180,13 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "F51Ff",
                       "name": "ar1arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -10353,13 +10213,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "O72NBX",
                       "name": "ar2icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "file-text",
-                      "iconFontFamily": "phosphor",
+                      "icon": "file-text",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -10375,13 +10235,13 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "BwiLT",
                       "name": "ar2arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -10408,13 +10268,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "SlgtA",
                       "name": "ar3icon",
                       "width": 22,
                       "height": 22,
-                      "iconFontName": "lock",
-                      "iconFontFamily": "phosphor",
+                      "icon": "lock",
+                      "library": "phosphor",
                       "fill": "#FFFFFF"
                     },
                     {
@@ -10430,13 +10290,13 @@
                       "fontWeight": "500"
                     },
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "lGTP7",
                       "name": "ar3arrow",
                       "width": 18,
                       "height": 18,
-                      "iconFontName": "caret-right",
-                      "iconFontFamily": "phosphor",
+                      "icon": "caret-right",
+                      "library": "phosphor",
                       "fill": "#ffffff60"
                     }
                   ]
@@ -10486,11 +10346,8 @@
       "height": 844,
       "fill": "#1A1A1A",
       "cornerRadius": 44,
-      "stroke": {
-        "align": "center",
-        "thickness": 1,
-        "fill": "#ffffff1f"
-      },
+      "stroke": "#ffffff1f",
+      "strokeWidth": 1,
       "effect": {
         "type": "shadow",
         "shadowType": "outer",
@@ -10556,10 +10413,9 @@
                   "width": "fill_container",
                   "fill": "#1A1A1A",
                   "cornerRadius": 24,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#ffffff33"
-                  },
+                  "stroke": "#ffffff33",
+                  "strokeWidth": 1,
+                  "strokeAlignment": "inner",
                   "layout": "vertical",
                   "gap": 16,
                   "padding": 20,
@@ -10583,13 +10439,13 @@
                           "fontWeight": "700"
                         },
                         {
-                          "type": "icon_font",
+                          "type": "icon",
                           "id": "hxLnv",
                           "name": "closeModal",
                           "width": 24,
                           "height": 24,
-                          "iconFontName": "x",
-                          "iconFontFamily": "phosphor",
+                          "icon": "x",
+                          "library": "phosphor",
                           "fill": "#ffffff80"
                         }
                       ]
@@ -10620,63 +10476,63 @@
                           "justifyContent": "space_between",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "s8ABqd",
                               "name": "icon1",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "fork-knife",
-                              "iconFontFamily": "phosphor",
+                              "icon": "fork-knife",
+                              "library": "phosphor",
                               "fill": "#F97316"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "R2VaM",
                               "name": "icon2",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "bus",
-                              "iconFontFamily": "phosphor",
+                              "icon": "bus",
+                              "library": "phosphor",
                               "fill": "#3B82F6"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "X67vj",
                               "name": "icon3",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "shopping-cart",
-                              "iconFontFamily": "phosphor",
+                              "icon": "shopping-cart",
+                              "library": "phosphor",
                               "fill": "#A855F7"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "EsFfd",
                               "name": "icon4",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "music-note",
-                              "iconFontFamily": "phosphor",
+                              "icon": "music-note",
+                              "library": "phosphor",
                               "fill": "#EC4899"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "i79Tro",
                               "name": "icon5",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "house",
-                              "iconFontFamily": "phosphor",
+                              "icon": "house",
+                              "library": "phosphor",
                               "fill": "#F59E0B"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "NzlmG",
                               "name": "icon6",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "first-aid",
-                              "iconFontFamily": "phosphor",
+                              "icon": "first-aid",
+                              "library": "phosphor",
                               "fill": "#EF4444"
                             }
                           ]
@@ -10689,63 +10545,63 @@
                           "justifyContent": "space_between",
                           "children": [
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "oyMSJ",
                               "name": "icon7",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "airplane",
-                              "iconFontFamily": "phosphor",
+                              "icon": "airplane",
+                              "library": "phosphor",
                               "fill": "#06B6D4"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "xo6M2",
                               "name": "icon8",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "device-mobile",
-                              "iconFontFamily": "phosphor",
+                              "icon": "device-mobile",
+                              "library": "phosphor",
                               "fill": "#8B5CF6"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "EG1xK",
                               "name": "icon9",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "baseball",
-                              "iconFontFamily": "phosphor",
+                              "icon": "baseball",
+                              "library": "phosphor",
                               "fill": "#10B981"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "tRZvm",
                               "name": "icon10",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "film-strip",
-                              "iconFontFamily": "phosphor",
+                              "icon": "film-strip",
+                              "library": "phosphor",
                               "fill": "#F43F5E"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "LnuUb",
                               "name": "icon11",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "game-controller",
-                              "iconFontFamily": "phosphor",
+                              "icon": "game-controller",
+                              "library": "phosphor",
                               "fill": "#F59E0B"
                             },
                             {
-                              "type": "icon_font",
+                              "type": "icon",
                               "id": "MFqWZ",
                               "name": "icon12",
                               "width": 28,
                               "height": 28,
-                              "iconFontName": "cat",
-                              "iconFontFamily": "phosphor",
+                              "icon": "cat",
+                              "library": "phosphor",
                               "fill": "#84CC16"
                             }
                           ]
@@ -10770,10 +10626,9 @@
                       "height": 48,
                       "fill": "#ffffff1a",
                       "cornerRadius": 14,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#ffffff33"
-                      },
+                      "stroke": "#ffffff33",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
                       "padding": [
                         0,
                         16
@@ -10819,10 +10674,9 @@
                           "height": 32,
                           "fill": "#F97316",
                           "cornerRadius": 16,
-                          "stroke": {
-                            "thickness": 3,
-                            "fill": "#FFFFFF"
-                          }
+                          "stroke": "#FFFFFF",
+                          "strokeWidth": 3,
+                          "strokeAlignment": "inner"
                         },
                         {
                           "type": "frame",
@@ -10886,10 +10740,9 @@
                           "height": 48,
                           "fill": "#ffffff1a",
                           "cornerRadius": 24,
-                          "stroke": {
-                            "thickness": 1,
-                            "fill": "#ffffff33"
-                          },
+                          "stroke": "#ffffff33",
+                          "strokeWidth": 1,
+                          "strokeAlignment": "inner",
                           "justifyContent": "center",
                           "alignItems": "center",
                           "children": [
@@ -11114,8 +10967,8 @@
     {
       "type": "frame",
       "id": "x4oTM",
-      "x": 4134,
-      "y": -452,
+      "x": 1973,
+      "y": 1200,
       "name": "Top Notification Component",
       "reusable": true,
       "width": 360,
@@ -11129,10 +10982,9 @@
           "width": 360,
           "fill": "#1A1A1ACC",
           "cornerRadius": 16,
-          "stroke": {
-            "thickness": 1,
-            "fill": "#ffffff26"
-          },
+          "stroke": "#ffffff26",
+          "strokeWidth": 1,
+          "strokeAlignment": "inner",
           "effect": [
             {
               "type": "background_blur",
@@ -11173,13 +11025,13 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "xkz8g",
                       "name": "Toast Icon",
                       "width": 20,
                       "height": 20,
-                      "iconFontName": "check-circle",
-                      "iconFontFamily": "phosphor",
+                      "icon": "check-circle",
+                      "library": "phosphor",
                       "fill": "#4ADE80"
                     }
                   ]
@@ -11208,96 +11060,18 @@
                   "alignItems": "center",
                   "children": [
                     {
-                      "type": "icon_font",
+                      "type": "icon",
                       "id": "Y6SrFk",
                       "name": "Close Icon",
                       "width": 14,
                       "height": 14,
-                      "iconFontName": "x",
-                      "iconFontFamily": "phosphor",
+                      "icon": "x",
+                      "library": "phosphor",
                       "fill": "#FFFFFF99"
                     }
                   ]
                 }
               ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "frame",
-      "id": "F9KQa",
-      "x": 4517,
-      "y": -452,
-      "name": "Top Notification Demo",
-      "clip": true,
-      "width": 420,
-      "height": 420,
-      "layout": "vertical",
-      "gap": 16,
-      "padding": 24,
-      "children": [
-        {
-          "type": "frame",
-          "id": "qeIzN",
-          "name": "Status Bar",
-          "width": "fill_container",
-          "height": 62,
-          "fill": "#00000000",
-          "padding": [
-            0,
-            20
-          ],
-          "justifyContent": "center",
-          "children": [
-            {
-              "type": "text",
-              "id": "cKivU",
-              "name": "Time",
-              "fill": "#FFFFFF",
-              "content": "9:41",
-              "fontFamily": "Inter",
-              "fontSize": 17,
-              "fontWeight": "600"
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "M0Mu0s",
-          "name": "Notification Area",
-          "width": "fill_container",
-          "layout": "vertical",
-          "gap": 12,
-          "children": [
-            {
-              "id": "f5l3b",
-              "type": "ref",
-              "ref": "x4oTM",
-              "name": "Info Notification",
-              "width": 360
-            },
-            {
-              "id": "YgXtd",
-              "type": "ref",
-              "ref": "x4oTM",
-              "name": "Warning Notification",
-              "width": 360
-            },
-            {
-              "id": "VVNGi",
-              "type": "ref",
-              "ref": "x4oTM",
-              "name": "Error Notification",
-              "width": 360
-            },
-            {
-              "id": "mGkcs",
-              "type": "ref",
-              "ref": "x4oTM",
-              "name": "Success Notification",
-              "width": 360
             }
           ]
         }

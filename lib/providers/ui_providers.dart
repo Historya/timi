@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timi/core/constants/transaction_type.dart';
+import 'package:timi/core/constants/settings_keys.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/data/database/daos/transaction_dao.dart';
 import 'package:timi/providers/database_provider.dart';
@@ -71,7 +73,7 @@ class LocaleNotifier extends Notifier<Locale> {
     ref.onDispose(() => _disposed = true);
     Future.microtask(() async {
       final dao = ref.read(settingsDaoProvider);
-      final lang = await dao.get('language');
+      final lang = await dao.get(SettingsKeys.language);
       if (lang != null && !_disposed) {
         state = Locale(lang);
       }
@@ -82,7 +84,7 @@ class LocaleNotifier extends Notifier<Locale> {
   /// 切换语言：写入数据库并更新状态
   Future<void> setLanguage(String lang) async {
     final dao = ref.read(settingsDaoProvider);
-    await dao.set('language', lang);
+    await dao.set(SettingsKeys.language, lang);
     state = Locale(lang);
   }
 }
@@ -100,11 +102,11 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     ref.onDispose(() => _disposed = true);
     Future.microtask(() async {
       final dao = ref.read(settingsDaoProvider);
-      final saved = await dao.get('theme_mode');
+      final saved = await dao.get(SettingsKeys.themeMode);
       if (saved != null && !_disposed) {
         state = switch (saved) {
-          'dark' => ThemeMode.dark,
-          'light' => ThemeMode.light,
+          ThemeModeValue.dark => ThemeMode.dark,
+          ThemeModeValue.light => ThemeMode.light,
           _ => ThemeMode.system,
         };
       }
@@ -120,10 +122,10 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
       ThemeMode.light => ThemeMode.system,
     };
     final dao = ref.read(settingsDaoProvider);
-    await dao.set('theme_mode', switch (next) {
-      ThemeMode.dark => 'dark',
-      ThemeMode.light => 'light',
-      _ => 'system',
+    await dao.set(SettingsKeys.themeMode, switch (next) {
+      ThemeMode.dark => ThemeModeValue.dark,
+      ThemeMode.light => ThemeModeValue.light,
+      _ => ThemeModeValue.system,
     });
     state = next;
   }
@@ -192,7 +194,7 @@ final monthlyBudgetProvider = FutureProvider.autoDispose
 
       // 获取各分类实际花费（从分类排行流取首次数据）
       final rankings = await transactionDao
-          .watchCategoryRanking(param.year, param.month, 'expense')
+          .watchCategoryRanking(param.year, param.month, TransactionType.expense.value)
           .first;
       final rankingMap = {for (var r in rankings) r.categoryId: r.total};
 
@@ -200,7 +202,7 @@ final monthlyBudgetProvider = FutureProvider.autoDispose
       final totalSpent = await transactionDao.getMonthlyTotalByType(
         param.year,
         param.month,
-        'expense',
+        TransactionType.expense.value,
       );
 
       final categorySpending = <CategoryBudgetWithSpending>[];
@@ -233,14 +235,14 @@ final currentAsrEngineProvider = FutureProvider<AsrService>((ref) async {
   final dao = ref.watch(settingsDaoProvider);
 
   // 从数据库读取引擎类型，默认为 dashscope
-  final engine = await dao.get('asr_engine') ?? 'dashscope';
+  final engine = await dao.get(SettingsKeys.asrEngine) ?? AsrEngineType.dashscope;
 
   switch (engine) {
-    case 'tencent':
+    case AsrEngineType.tencent:
       // 读取腾讯云 ASR 三凭证
-      final appId = await dao.get('tencent_app_id') ?? '';
-      final secretId = await dao.get('tencent_secret_id') ?? '';
-      final secretKey = await dao.get('tencent_secret_key') ?? '';
+      final appId = await dao.get(SettingsKeys.tencentAppId) ?? '';
+      final secretId = await dao.get(SettingsKeys.tencentSecretId) ?? '';
+      final secretKey = await dao.get(SettingsKeys.tencentSecretKey) ?? '';
       return TencentAsrService(
         appId: appId,
         secretId: secretId,
@@ -270,7 +272,7 @@ final currentSemanticParserProvider = FutureProvider<SemanticParserService>((
   final dao = ref.watch(settingsDaoProvider);
 
   // 从数据库读取引擎类型，默认为 dashscope
-  final engine = await dao.get('semantic_parser_engine') ?? 'dashscope';
+  final engine = await dao.get(SettingsKeys.semanticParserEngine) ?? SemanticParserEngineType.dashscope;
 
   switch (engine) {
     default:

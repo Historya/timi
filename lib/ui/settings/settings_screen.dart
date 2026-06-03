@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:timi/core/constants/settings_keys.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
@@ -262,7 +263,7 @@ class _DataCardState extends ConsumerState<_DataCard> {
   /// 从 SettingsTable 加载预算提醒开关状态
   Future<void> _loadBudgetAlert() async {
     final dao = ref.read(settingsDaoProvider);
-    final value = await dao.get('budget_alert');
+    final value = await dao.get(SettingsKeys.budgetAlert);
     if (mounted) {
       setState(() => _budgetAlert = value == 'true');
     }
@@ -272,7 +273,7 @@ class _DataCardState extends ConsumerState<_DataCard> {
   Future<void> _toggleBudgetAlert() async {
     final dao = ref.read(settingsDaoProvider);
     final newValue = _budgetAlert != true;
-    await dao.set('budget_alert', newValue.toString());
+    await dao.set(SettingsKeys.budgetAlert, newValue.toString());
     if (mounted) {
       setState(() => _budgetAlert = newValue);
     }
@@ -295,7 +296,7 @@ class _DataCardState extends ConsumerState<_DataCard> {
             icon: PhosphorIconsLight.currencyCircleDollar,
             label: l10n.defaultCurrency,
             trailing: FutureBuilder<String?>(
-              future: dao.get('currency'),
+              future: dao.get(SettingsKeys.currency),
               builder: (context, snapshot) =>
                   _TrailingText(snapshot.data ?? l10n.currencyCNY),
             ),
@@ -326,7 +327,7 @@ class _AsrSettingsCard extends ConsumerStatefulWidget {
 }
 
 class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
-  String _engine = 'dashscope'; // 当前引擎类型
+  String _engine = AsrEngineType.dashscope; // 当前引擎类型
   String _dashscopeKey = '';
   String _tencentAppId = '';
   String _tencentSecretId = '';
@@ -345,11 +346,11 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
   /// 从 SettingsTable 加载所有 ASR 配置
   Future<void> _loadSettings() async {
     final dao = ref.read(settingsDaoProvider);
-    final engine = await dao.get('asr_engine') ?? 'dashscope';
-    final dashscopeKey = await dao.get('dashscope_api_key') ?? '';
-    final tencentAppId = await dao.get('tencent_app_id') ?? '';
-    final tencentSecretId = await dao.get('tencent_secret_id') ?? '';
-    final tencentSecretKey = await dao.get('tencent_secret_key') ?? '';
+    final engine = await dao.get(SettingsKeys.asrEngine) ?? AsrEngineType.dashscope;
+    final dashscopeKey = await dao.get(SettingsKeys.dashscopeApiKey) ?? '';
+    final tencentAppId = await dao.get(SettingsKeys.tencentAppId) ?? '';
+    final tencentSecretId = await dao.get(SettingsKeys.tencentSecretId) ?? '';
+    final tencentSecretKey = await dao.get(SettingsKeys.tencentSecretKey) ?? '';
     if (mounted) {
       setState(() {
         _engine = engine;
@@ -407,7 +408,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                   color: AppTheme.textOnSurfaceTertiary(context),
                 ),
               ),
-              trailing: _engine == 'dashscope'
+              trailing: _engine == AsrEngineType.dashscope
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -441,7 +442,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                   : null,
               onTap: () {
                 Navigator.of(ctx).pop();
-                _setEngine('dashscope');
+                _setEngine(AsrEngineType.dashscope);
               },
             ),
             // 腾讯云 ASR 选项
@@ -461,7 +462,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                   color: AppTheme.textOnSurfaceTertiary(context),
                 ),
               ),
-              trailing: _engine == 'tencent'
+              trailing: _engine == AsrEngineType.tencent
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -495,7 +496,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
                   : null,
               onTap: () {
                 Navigator.of(ctx).pop();
-                _setEngine('tencent');
+                _setEngine(AsrEngineType.tencent);
               },
             ),
             const SizedBox(height: 16),
@@ -508,7 +509,7 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
   /// 切换引擎类型并写入数据库
   Future<void> _setEngine(String engine) async {
     final dao = ref.read(settingsDaoProvider);
-    await dao.set('asr_engine', engine);
+    await dao.set(SettingsKeys.asrEngine, engine);
     if (mounted) {
       setState(() {
         _engine = engine;
@@ -568,13 +569,13 @@ class _AsrSettingsCardState extends ConsumerState<_AsrSettingsCard> {
       // 更新本地状态缓存，并重置测试状态
       setState(() {
         _testStatus = 'untested';
-        if (dbKey == 'dashscope_api_key') {
+        if (dbKey == SettingsKeys.dashscopeApiKey) {
           _dashscopeKey = newValue;
-        } else if (dbKey == 'tencent_app_id') {
+        } else if (dbKey == SettingsKeys.tencentAppId) {
           _tencentAppId = newValue;
-        } else if (dbKey == 'tencent_secret_id') {
+        } else if (dbKey == SettingsKeys.tencentSecretId) {
           _tencentSecretId = newValue;
-        } else if (dbKey == 'tencent_secret_key') {
+        } else if (dbKey == SettingsKeys.tencentSecretKey) {
           _tencentSecretKey = newValue;
         }
       });
@@ -1014,7 +1015,7 @@ class _AiAnalysisCard extends ConsumerStatefulWidget {
 }
 
 class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
-  String _engine = 'dashscope'; // 当前引擎类型
+  String _engine = SemanticParserEngineType.dashscope; // 当前引擎类型
   String _llmApiKey = '';
   bool _loading = true;
 
@@ -1028,8 +1029,8 @@ class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
   /// 从 SettingsTable 加载语义分析配置
   Future<void> _loadSettings() async {
     final dao = ref.read(settingsDaoProvider);
-    final engine = await dao.get('semantic_parser_engine') ?? 'dashscope';
-    final key = await dao.get('dashscope_llm_api_key') ?? '';
+    final engine = await dao.get(SettingsKeys.semanticParserEngine) ?? SemanticParserEngineType.dashscope;
+    final key = await dao.get(SettingsKeys.dashscopeLlmApiKey) ?? '';
     if (mounted) {
       setState(() {
         _engine = engine;
@@ -1093,7 +1094,7 @@ class _AiAnalysisCardState extends ConsumerState<_AiAnalysisCard> {
     );
     if (newValue != null && context.mounted) {
       final dao = ref.read(settingsDaoProvider);
-      await dao.set('dashscope_llm_api_key', newValue);
+      await dao.set(SettingsKeys.dashscopeLlmApiKey, newValue);
       if (mounted) {
         setState(() => _llmApiKey = newValue);
       }
@@ -1308,9 +1309,9 @@ class _DisplayCard extends ConsumerWidget {
               icon: PhosphorIconsLight.translate,
               label: l10n.language,
               trailing: FutureBuilder<String?>(
-                future: dao.get('language'),
+                future: dao.get(SettingsKeys.language),
                 builder: (context, snapshot) => _TrailingText(
-                  snapshot.data == 'en' ? l10n.english : l10n.chinese,
+                  snapshot.data == 'en' ? l10n.english : l10n.chinese, // 'en' 为语言代码常量
                 ),
               ),
             ),
