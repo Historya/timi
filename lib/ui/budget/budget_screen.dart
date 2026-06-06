@@ -147,9 +147,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: Scaffold(
         body: SafeArea(
           child: Column(

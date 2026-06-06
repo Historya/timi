@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/ui_providers.dart';
+import 'package:timi/ui/debug/sql_debug_sheet.dart';
 import 'package:timi/ui/home/home_screen.dart';
 import 'package:timi/ui/bills/bills_screen.dart';
 import 'package:timi/ui/statistics/statistics_screen.dart';
@@ -151,6 +153,11 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               ),
             ),
           ),
+          // 开发模式：SQL 调试触发按钮和 Sheet
+          if (kDebugMode) ...[
+            const SqlDebugSheet(),
+            const SqlDebugTrigger(),
+          ],
         ],
       ),
     );
@@ -163,62 +170,70 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final double railWidth = 100;
 
     return Scaffold(
-      body: Row(
+      body: Stack(
         children: [
-          // 左侧导航栏
-          NavigationRail(
-            selectedIndex: currentIndex,
-            onDestinationSelected: (i) =>
-                ref.read(currentTabIndexProvider.notifier).state = i,
-            labelType: NavigationRailLabelType.all,
-            minExtendedWidth: railWidth,
-            backgroundColor: Colors.transparent,
-            indicatorColor: isDark
-                ? AppTheme.glassFillNavBar(context)
-                : Colors.black.withValues(alpha: 0.08),
-            leading: Padding(
-              padding: const EdgeInsets.only(top: 32, bottom: 16),
-              child: Icon(
-                PhosphorIconsLight.coin,
-                size: 32,
-                color: AppTheme.textOnSurface(context),
-              ),
-            ),
-            // 导航项配置
-            destinations: tabs.map((tab) {
-              return NavigationRailDestination(
-                icon: Icon(
-                  tab.icon,
-                  color: AppTheme.textOnSurfaceTertiary(context),
-                ),
-                selectedIcon: Icon(
-                  tab.activeIcon,
-                  color: AppTheme.textOnSurface(context),
-                ),
-                label: Text(
-                  tab.label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: AppTheme.textOnSurfaceSecondary(context),
+          Row(
+            children: [
+              // 左侧导航栏
+              NavigationRail(
+                selectedIndex: currentIndex,
+                onDestinationSelected: (i) =>
+                    ref.read(currentTabIndexProvider.notifier).state = i,
+                labelType: NavigationRailLabelType.all,
+                minExtendedWidth: railWidth,
+                backgroundColor: Colors.transparent,
+                indicatorColor: isDark
+                    ? AppTheme.glassFillNavBar(context)
+                    : Colors.black.withValues(alpha: 0.08),
+                leading: Padding(
+                  padding: const EdgeInsets.only(top: 32, bottom: 16),
+                  child: Icon(
+                    PhosphorIconsLight.coin,
+                    size: 32,
+                    color: AppTheme.textOnSurface(context),
                   ),
                 ),
-              );
-            }).toList(),
+                // 导航项配置
+                destinations: tabs.map((tab) {
+                  return NavigationRailDestination(
+                    icon: Icon(
+                      tab.icon,
+                      color: AppTheme.textOnSurfaceTertiary(context),
+                    ),
+                    selectedIcon: Icon(
+                      tab.activeIcon,
+                      color: AppTheme.textOnSurface(context),
+                    ),
+                    label: Text(
+                      tab.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: AppTheme.textOnSurfaceSecondary(context),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              // 右侧内容区域
+              Expanded(
+                child: IndexedStack(
+                  index: currentIndex,
+                  children: const [
+                    HomeScreen(),
+                    BillsScreen(),
+                    StatisticsScreen(),
+                    ProfileScreen(),
+                  ],
+                ),
+              ),
+            ],
           ),
-          // 右侧内容区域，带毛玻璃分隔线
-          // const VerticalDivider(width: 1, thickness: 1),
-          Expanded(
-            child: IndexedStack(
-              index: currentIndex,
-              children: const [
-                HomeScreen(),
-                BillsScreen(),
-                StatisticsScreen(),
-                ProfileScreen(),
-              ],
-            ),
-          ),
+          // 开发模式：SQL 调试触发按钮和 Sheet
+          if (kDebugMode) ...[
+            const SqlDebugSheet(),
+            const SqlDebugTrigger(),
+          ],
         ],
       ),
     );

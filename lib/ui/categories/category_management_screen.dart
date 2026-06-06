@@ -196,9 +196,7 @@ class _CategoryManagementScreenState
     final categoriesAsync = ref.watch(categoriesByTypeProvider(_selectedType));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: Scaffold(
         body: SafeArea(
           child: Column(

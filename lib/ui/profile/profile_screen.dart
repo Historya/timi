@@ -18,10 +18,7 @@ class ProfileScreen extends ConsumerWidget {
     // 监听当前月份，传递给统计卡片
     final month = ref.watch(currentMonthProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // 根据主题亮度适配状态栏样式
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),

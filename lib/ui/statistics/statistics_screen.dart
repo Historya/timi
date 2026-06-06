@@ -20,10 +20,7 @@ class StatisticsScreen extends ConsumerWidget {
     // 监听当前选中的月份
     final month = ref.watch(currentMonthProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // 根据主题亮度适配状态栏样式
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: SafeArea(
         child: Column(
           children: [
@@ -184,7 +181,7 @@ class _OverviewCard extends ConsumerWidget {
         children: [
           // "X月总支出" 标签（60% 透明度）
           Text(
-            l10n.totalExpenseFor(month.year, month.month),
+            l10n.totalExpenseFor(month.month, month.year),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -267,8 +264,8 @@ class _ChartCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final period = ref.watch(periodTypeProvider);
     // 周模式：每日消费数据；月模式：年度每月消费数据
-    final dailyAsync = ref.watch(dailyTotalsProvider(month));
-    final yearlyAsync = ref.watch(yearlyMonthlyTotalsProvider(month.year));
+    // Watch the appropriate provider depending on period and pass directly
+    // to the corresponding chart builder to preserve correct types.
 
     return Container(
       width: double.infinity,
@@ -293,9 +290,9 @@ class _ChartCard extends ConsumerWidget {
           const SizedBox(height: 12),
           // 根据周期模式显示不同的图表
           if (period == 'week')
-            _buildWeeklyChart(context, dailyAsync)
+            _buildWeeklyChart(context, ref.watch(dailyTotalsProvider(month)))
           else
-            _buildYearlyChart(context, yearlyAsync),
+            _buildYearlyChart(context, ref.watch(yearlyMonthlyTotalsProvider(month.year))),
         ],
       ),
     );

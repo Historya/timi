@@ -115,7 +115,7 @@ class TransactionDao {
     return _db
         .customSelect(
           '''
-      SELECT CAST(strftime('%d', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as day,
+      SELECT CAST(strftime('%d', date, 'unixepoch', 'localtime') AS INTEGER) as day,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
       WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'
@@ -177,8 +177,8 @@ class TransactionDao {
     return _db
         .customSelect(
           '''
-          SELECT CAST(strftime('%m', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month,
-                COALESCE(SUM(amount), 0) as total
+SELECT CAST(strftime('%m', date, 'unixepoch', 'localtime') AS INTEGER) as month,
+          COALESCE(SUM(amount), 0) as total
           FROM transactions_table
           WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'
           GROUP BY month
@@ -207,7 +207,7 @@ class TransactionDao {
     final end = DateTime(year + 1, 1, 1);
     final rows = await _db.customSelect(
       '''
-      SELECT CAST(strftime('%m', date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month,
+      SELECT CAST(strftime('%m', date, 'unixepoch', 'localtime') AS INTEGER) as month,
              COALESCE(SUM(amount), 0) as total
       FROM transactions_table
       WHERE date >= ? AND date < ? AND type = '${TransactionType.expense.value}'

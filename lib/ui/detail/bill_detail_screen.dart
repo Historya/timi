@@ -53,9 +53,7 @@ class BillDetailScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final detailAsync = ref.watch(billDetailProvider(id));
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: Scaffold(
         body: SafeArea(
           child: detailAsync.when(

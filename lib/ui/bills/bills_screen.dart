@@ -65,10 +65,7 @@ class BillsScreen extends ConsumerWidget {
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // 根据主题亮度适配状态栏样式
-      value: Theme.of(context).brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: AppTheme.systemUiOverlayStyle(context),
       child: SafeArea(
         child: Column(
           children: [

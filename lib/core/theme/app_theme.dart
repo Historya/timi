@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
@@ -127,6 +128,32 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       useMaterial3: true,
+    );
+  }
+
+  /// 返回统一的 SystemUiOverlayStyle
+  ///
+  /// - 状态栏背景透明，让背景色自然透出
+  /// - 底部导航栏显式使用与主题背景一致的颜色，避免透明在部分机型上显示异常
+  /// - 图标颜色根据主题自动适配（暗色→白色图标，浅色→黑色图标）
+  static SystemUiOverlayStyle systemUiOverlayStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 使用与 theme scaffoldBackgroundColor 一致的颜色
+    final navColor = isDark ? surfaceDark : Colors.white;
+    return SystemUiOverlayStyle(
+      // 状态栏透明，让背景色自然透出
+      statusBarColor: Colors.transparent,
+      // 底部导航栏显式使用主题背景色，避免透明在某些机型上显示白色块
+      systemNavigationBarColor: navColor,
+      systemNavigationBarDividerColor: Colors.transparent,
+      // 关闭对比度强制
+      systemStatusBarContrastEnforced: false,
+      systemNavigationBarContrastEnforced: false,
+      // 图标颜色基于主题自动适配
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
     );
   }
 
