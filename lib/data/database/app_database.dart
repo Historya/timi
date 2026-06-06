@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:timi/core/constants/preset_categories.dart';
 import 'package:timi/core/constants/settings_keys.dart';
 import 'tables/categories_table.dart';
 import 'tables/transactions_table.dart';
@@ -32,6 +33,20 @@ class AppDatabase extends _$AppDatabase {
     beforeOpen: (OpeningDetails details) async {
       if (details.wasCreated) {
         // 数据库首次创建，插入默认分类、默认设置等
+        // 插入预设支出分类
+        final now = DateTime.now();
+        for (final cat in allPresetCategories) {
+          await into(categoriesTable).insert(CategoriesTableCompanion(
+            name: Value(cat.name),
+            icon: Value(cat.icon),
+            color: Value(cat.color),
+            type: Value(cat.type),
+            sortOrder: Value(cat.sortOrder),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ));
+        }
+
         await into(settingsTable).insert(
           SettingsTableCompanion(
             key: Value(SettingsKeys.tencentAppId),
