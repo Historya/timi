@@ -180,7 +180,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This bill is not in the current accounting period';
 
   @override
-  String get statistics => 'Expense Statistics';
+  String get statistics => 'Statistics';
 
   @override
   String get backToToday => 'Back to Today';

@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @statistics.
   ///
   /// In en, this message translates to:
-  /// **'Expense Statistics'**
+  /// **'Statistics'**
   String get statistics;
 
   /// No description provided for @backToToday.

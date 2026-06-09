@@ -61,7 +61,7 @@
   "confirmDeleteCategory": "Are you sure you want to delete the category「{name}」?\nThis action cannot be undone.",
   "notInCurrentMonth": "This bill is not in the current accounting period",
 
-  "statistics": "Expense Statistics",
+  "statistics": "Statistics",
   "backToToday": "Back to Today",
   "week": "Week",
   "month": "Moth",
