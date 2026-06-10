@@ -142,6 +142,8 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
   }
 
   Future<void> _dismiss() async {
+    // 如果 Widget 已被移除，不再调用反向动画
+    if (!mounted) return;
     // 出场动画（反向）后再移除
     await _controller.reverse();
     if (mounted) {
@@ -180,10 +182,10 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                   ),
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   decoration: BoxDecoration(
-                    color: AppTheme.glassFillAccent(context),
+                    color: AppTheme.glassFillNotification(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppTheme.glassStroke(context),
+                      color: AppTheme.glassFill(context),
                       width: 1,
                     ),
                     boxShadow: [

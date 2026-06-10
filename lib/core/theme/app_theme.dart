@@ -91,6 +91,12 @@ class AppTheme {
     return isDark ? glassWhite40 : glassBlack0f;
   }
 
+    /// 通知条毛玻璃填充色（最深层）
+  static Color glassFillNotification(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? Colors.black : surfaceLight;
+  }
+
   /// 根据主题返回合适的阴影颜色
   /// 暗色模式用黑色阴影，浅色模式用极淡阴影避免视觉污染
   static Color glassShadowColor(BuildContext context) {
