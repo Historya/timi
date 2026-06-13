@@ -123,6 +123,7 @@ class TransactionDao {
       ORDER BY day
       ''',
           variables: [Variable(start), Variable(end)],
+          readsFrom: { _db.transactionsTable },
         )
         .watch()
         .map((rows) {
@@ -156,6 +157,7 @@ class TransactionDao {
       ORDER BY total DESC
       ''',
           variables: [Variable(start), Variable(end), Variable(type)],
+          readsFrom: { _db.transactionsTable },
         )
         .watch()
         .map((rows) {
@@ -185,6 +187,7 @@ SELECT CAST(strftime('%m', date, 'unixepoch', 'localtime') AS INTEGER) as month,
           ORDER BY month
           ''',
           variables: [Variable(start), Variable(end)],
+          readsFrom: { _db.transactionsTable },
         )
         .watch()
         .map((rows) {
