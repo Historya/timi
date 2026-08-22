@@ -31,14 +31,14 @@ class _SqlDebugSheetState extends ConsumerState<SqlDebugSheet>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(1.0, 0.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _slideController,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          ),
+        );
   }
 
   @override
@@ -70,15 +70,17 @@ class _SqlDebugSheetState extends ConsumerState<SqlDebugSheet>
 
     return SlideTransition(
       position: _slideAnimation,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: SizedBox(
-          width: sheetWidth,
-          height: double.infinity,
-          child: Material(
-            color: Colors.transparent,
-            child: _SheetContent(
-              resultScrollController: _resultScrollController,
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: sheetWidth,
+            height: double.infinity,
+            child: Material(
+              color: Colors.transparent,
+              child: _SheetContent(
+                resultScrollController: _resultScrollController,
+              ),
             ),
           ),
         ),
@@ -109,10 +111,7 @@ class _SheetContent extends ConsumerWidget {
             ? AppTheme.surfaceDark.withValues(alpha: 0.97)
             : Colors.white.withValues(alpha: 0.97),
         border: Border(
-          left: BorderSide(
-            color: AppTheme.glassStroke(context),
-            width: 1,
-          ),
+          left: BorderSide(color: AppTheme.glassStroke(context), width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -142,7 +141,7 @@ class _SheetContent extends ConsumerWidget {
           // --- 结果区 ---
           if (queryResult != null)
             Expanded(child: _buildResultTable(context, queryResult, isDark))
-        else if (affectedRows != null)
+          else if (affectedRows != null)
             _buildAffectedRows(affectedRows, isDark),
         ],
       ),
@@ -239,7 +238,8 @@ class _SheetContent extends ConsumerWidget {
           height: 1.5,
         ),
         decoration: InputDecoration(
-          hintText: '输入 SQL 语句...\n例如: SELECT * FROM transactions_table LIMIT 10',
+          hintText:
+              '输入 SQL 语句...\n例如: SELECT * FROM transactions_table LIMIT 10',
           hintStyle: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
@@ -252,22 +252,15 @@ class _SheetContent extends ConsumerWidget {
           contentPadding: const EdgeInsets.all(12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppTheme.glassStroke(context),
-            ),
+            borderSide: BorderSide(color: AppTheme.glassStroke(context)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppTheme.glassStroke(context),
-            ),
+            borderSide: BorderSide(color: AppTheme.glassStroke(context)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppTheme.accentBlue,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: AppTheme.accentBlue, width: 1.5),
           ),
         ),
       ),
@@ -286,8 +279,7 @@ class _SheetContent extends ConsumerWidget {
         width: double.infinity,
         height: 36,
         child: FilledButton.icon(
-          onPressed:
-              isExecuting ? null : () => _executeSql(context, ref),
+          onPressed: isExecuting ? null : () => _executeSql(context, ref),
           icon: isExecuting
               ? const SizedBox(
                   width: 16,
@@ -302,7 +294,10 @@ class _SheetContent extends ConsumerWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -430,10 +425,7 @@ class _SheetContent extends ConsumerWidget {
           const SizedBox(width: 8),
           Text(
             '执行成功，影响 $count 行',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.accentGreen,
-            ),
+            style: TextStyle(fontSize: 13, color: AppTheme.accentGreen),
           ),
         ],
       ),
