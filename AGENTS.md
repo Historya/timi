@@ -2,6 +2,10 @@
 
 Timi — a Flutter expense tracking app with voice input, AI semantic parsing, budget management, and statistics. Dark glassmorphism design, Chinese-first with English support.
 
+## communication skill
+- Try to use Chinese as much as possible, and make the language easy to understand and concise.
+- Try to use English punctuation marks as much as possible.
+
 ## Tech Stack
 
 | Layer | Choice |

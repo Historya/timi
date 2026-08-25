@@ -1320,6 +1320,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to start recording: {error}'**
   String recordingMicPermission(Object error);
+
+  /// No description provided for @keepAliveChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Service'**
+  String get keepAliveChannelName;
+
+  /// No description provided for @keepAliveChannelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps Timi ready for quick expense tracking'**
+  String get keepAliveChannelDesc;
+
+  /// No description provided for @keepAliveNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timi is ready, log anytime'**
+  String get keepAliveNotificationTitle;
+
+  /// No description provided for @keepAliveNotificationText.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to open and track'**
+  String get keepAliveNotificationText;
 }
 
 class _AppLocalizationsDelegate

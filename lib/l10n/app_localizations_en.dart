@@ -668,4 +668,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String recordingMicPermission(Object error) {
     return 'Unable to start recording: $error';
   }
+
+  @override
+  String get keepAliveChannelName => 'Background Service';
+
+  @override
+  String get keepAliveChannelDesc =>
+      'Keeps Timi ready for quick expense tracking';
+
+  @override
+  String get keepAliveNotificationTitle => 'Timi is ready, log anytime';
+
+  @override
+  String get keepAliveNotificationText => 'Tap to open and track';
 }

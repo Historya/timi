@@ -223,5 +223,10 @@
   "recordingError": "录音出错：{error}",
   "noSpeechDetected": "未识别到语音内容，请重试",
   "gettingRecognitionResult": "正在获取识别结果...",
-  "recordingMicPermission": "无法启动录音：{error}"
+  "recordingMicPermission": "无法启动录音：{error}",
+
+  "keepAliveChannelName": "后台运行服务",
+  "keepAliveChannelDesc": "让记账更顺手，打开应用秒开",
+  "keepAliveNotificationTitle": "Timi 已就绪，随时记一笔",
+  "keepAliveNotificationText": "点击快速记账"
 }

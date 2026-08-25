@@ -13,6 +13,7 @@ import 'package:timi/ui/budget/budget_screen.dart';
 import 'package:timi/ui/export/data_export_screen.dart';
 import 'package:timi/ui/about/about_screen.dart';
 import 'package:timi/ui/shared/widgets/scaffold_with_nav_bar.dart';
+import 'package:timi/core/router/route_observer.dart';
 
 /// 根导航器 Key，用于 push 路由跳转到全屏页面
 /// 根导航器 Key，暴露给外部组件（如 BudgetAlertWatcher）用于访问 Overlay
@@ -32,6 +33,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: ref.watch(localeRefreshProvider),
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
+    observers: [routeObserver],
     routes: [
       // 根路由：渲染带底部导航栏的页面框架
       GoRoute(

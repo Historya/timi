@@ -660,4 +660,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String recordingMicPermission(Object error) {
     return '无法启动录音：$error';
   }
+
+  @override
+  String get keepAliveChannelName => '后台运行服务';
+
+  @override
+  String get keepAliveChannelDesc => '让记账更顺手，打开应用秒开';
+
+  @override
+  String get keepAliveNotificationTitle => 'Timi 已就绪，随时记一笔';
+
+  @override
+  String get keepAliveNotificationText => '点击快速记账';
 }

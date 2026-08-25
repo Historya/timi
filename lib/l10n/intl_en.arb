@@ -223,5 +223,10 @@
   "recordingError": "Recording error: {error}",
   "noSpeechDetected": "No speech detected, please try again",
   "gettingRecognitionResult": "Getting recognition result...",
-  "recordingMicPermission": "Unable to start recording: {error}"
+  "recordingMicPermission": "Unable to start recording: {error}",
+
+  "keepAliveChannelName": "Background Service",
+  "keepAliveChannelDesc": "Keeps Timi ready for quick expense tracking",
+  "keepAliveNotificationTitle": "Timi is ready, log anytime",
+  "keepAliveNotificationText": "Tap to open and track"
 }

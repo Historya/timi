@@ -5,6 +5,7 @@ import 'package:timi/core/router/app_router.dart';
 import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/ui/shared/widgets/budget_alert_watcher.dart';
+import 'package:timi/ui/shared/widgets/keep_alive_starter.dart';
 
 class TimiApp extends ConsumerWidget {
   const TimiApp({super.key});
@@ -29,6 +30,9 @@ class TimiApp extends ConsumerWidget {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
+        // 在 MaterialApp 内部启动后台保活，保证能访问本地化文案
+        builder: (context, child) =>
+            KeepAliveStarter(child: child ?? const SizedBox.shrink()),
       ),
     );
   }
