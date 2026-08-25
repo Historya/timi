@@ -487,32 +487,31 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
               );
             }
-            final displayList = categories.length > 8
-                ? categories.sublist(0, 8)
-                : categories;
             return Column(
               children: [
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: displayList.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.75,
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      final isSelected = _selectedCategory?.id == cat.id;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: SizedBox(
+                          width: 64,
+                          child: _CategoryGridCell(
+                            category: cat,
+                            isSelected: isSelected,
+                            onTap: () => setState(() => _selectedCategory = cat),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  itemBuilder: (context, index) {
-                    final cat = displayList[index];
-                    final isSelected = _selectedCategory?.id == cat.id;
-                    return _CategoryGridCell(
-                      category: cat,
-                      isSelected: isSelected,
-                      onTap: () => setState(() => _selectedCategory = cat),
-                    );
-                  },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 // "管理分类" 按钮，跳转到分类管理页面
                 GestureDetector(
                   onTap: () => context.push('/categories'),
@@ -666,6 +665,7 @@ class _CategoryGridCell extends StatelessWidget {
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 48,

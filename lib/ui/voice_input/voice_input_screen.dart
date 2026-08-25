@@ -19,6 +19,7 @@ import 'package:timi/l10n/app_localizations.dart';
 import 'package:timi/providers/database_provider.dart';
 import 'package:timi/providers/ui_providers.dart';
 import 'package:timi/services/asr_service.dart';
+import 'package:timi/services/expense_parser.dart';
 import 'package:timi/services/semantic_parser.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
 
@@ -61,10 +62,18 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
   // ASR 引擎
   AsrService? _asrService;
   StreamSubscription<String>? _transcriptSubscription;
+  StreamSubscription<AsrConnectionState>? _asrConnectionSubscription;
+
+  // 首块音频数据保护定时器（录音启动后若迟迟无数据则主动停止）
+  Timer? _firstChunkTimer;
 
   // UI 状态
   _VoiceInputState _state = _VoiceInputState.idle;
   String _transcript = '';
+
+  // 多账目解析结果（同类合并后），单笔时长度为 1
+  List<ParsedExpense> _parsedExpenses = const [];
+  int _selectedExpenseIndex = 0;
 
   // 结果编辑表单控制器
   final _amountController = TextEditingController();
@@ -95,6 +104,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     debugPrint('[VoiceInput] dispose');
     _audioSubscription?.cancel();
     _transcriptSubscription?.cancel();
+    _asrConnectionSubscription?.cancel();
+    _firstChunkTimer?.cancel();
     _pulseController.dispose();
     _recorder.dispose();
     _amountController.dispose();
@@ -157,6 +168,18 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         }
       });
 
+      // 监听 ASR 连接状态，出错时自动停止录音并提示
+      _asrConnectionSubscription?.cancel();
+      _asrConnectionSubscription =
+          asrService.connectionStateStream.listen((state) {
+        if (state == AsrConnectionState.error &&
+            mounted &&
+            _state == _VoiceInputState.recording) {
+          debugPrint('[VoiceInput] ASR 连接出错，自动停止录音');
+          _stopRecordingForAsrError();
+        }
+      });
+
       // 开始录音，以 PCM 16kHz 16bit 单声道格式录制
       final audioStream = await _recorder.startStream(
         const RecordConfig(
@@ -169,8 +192,36 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
       // 将音频数据块实时发送给 ASR 引擎
       int chunkCount = 0;
+      bool gotFirstChunk = false;
+
+      // 首块数据保护：若 3 秒内无任何音频数据（麦克风异常/占用/静默无输出），
+      // 主动停止，避免等服务端 15 秒超时报"未发送音频数据"
+      _firstChunkTimer?.cancel();
+      _firstChunkTimer = Timer(const Duration(seconds: 3), () {
+        if (!gotFirstChunk &&
+            mounted &&
+            _state == _VoiceInputState.recording) {
+          debugPrint('[VoiceInput] 3 秒内未收到音频数据，主动停止');
+          _audioSubscription?.cancel();
+          _audioSubscription = null;
+          unawaited(_recorder.stop().catchError((_) => null));
+          _pulseController.stop();
+          TopNotification.show(
+            context,
+            message: l10n.noSpeechDetected,
+            type: TopNotificationType.warning,
+          );
+          _resetToIdle();
+        }
+      });
+
       _audioSubscription = audioStream.listen(
         (chunk) {
+          if (!gotFirstChunk) {
+            gotFirstChunk = true;
+            _firstChunkTimer?.cancel();
+            _firstChunkTimer = null;
+          }
           chunkCount++;
           asrService.sendAudio(chunk);
         },
@@ -217,6 +268,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     // 如果不在录音状态则忽略
     if (_state != _VoiceInputState.recording) return;
+
+    // 取消首块数据保护定时器
+    _firstChunkTimer?.cancel();
+    _firstChunkTimer = null;
 
     // 停止音频订阅
     await _audioSubscription?.cancel();
@@ -280,41 +335,45 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
         service: parserService,
         apiKey: apiKey,
       );
-      final parsed = await parser.parse(text: fullText);
-      debugPrint(
-        '[VoiceInput] 解析结果: amount=${parsed.amount}, '
-        'category=${parsed.categoryName}, type=${parsed.type}, '
-        'date=${parsed.date}, note="${parsed.note}"',
-      );
+      final parsedList = await parser.parse(text: fullText);
+      debugPrint('[VoiceInput] 解析出 ${parsedList.length} 笔账目');
 
-      // 检查 AI 解析出的分类是否已在数据库中
-      bool categoryExists = false;
-      final parsedCategoryName = parsed.categoryName;
-      if (parsedCategoryName != null && parsedCategoryName.isNotEmpty) {
-        final existingCategories = await ref.read(allCategoriesProvider.future);
-        categoryExists = existingCategories.any(
-          (c) => c.name == parsedCategoryName,
+      // 仅保留有效金额的账目
+      final validList = parsedList.where((e) => e.hasValidAmount).toList();
+      if (validList.isEmpty) {
+        debugPrint('[VoiceInput] 无有效金额账目，回到空闲态');
+        if (!mounted) return;
+        TopNotification.show(
+          context,
+          message: l10n.noSpeechDetected,
+          type: TopNotificationType.warning,
+        );
+        _resetToIdle();
+        return;
+      }
+
+      // 同类合并，减少确认负担（如"午饭25、晚饭30"合并为餐饮55）
+      final mergedList = ExpenseParser.mergeSameCategory(validList);
+      debugPrint('[VoiceInput] 同类合并后 ${mergedList.length} 笔账目');
+      for (final e in mergedList) {
+        debugPrint(
+          '[VoiceInput]   账目: amount=${e.amount}, '
+          'category=${e.categoryName}, type=${e.type}, '
+          'date=${e.date}, note="${e.note}"',
         );
       }
+
+      // 填充第一笔账目的表单，后续可在卡片间切换
+      _parsedExpenses = mergedList;
+      _syncFormFromIndex(0);
 
       setState(() {
         _state = _VoiceInputState.result;
         _transcript = fullText;
-        _amountController.text = parsed.amount?.toStringAsFixed(2) ?? '';
-        _selectedCategoryName = parsedCategoryName ?? '';
-        _selectedType = parsed.type ?? 'expense';
-        _selectedDate = parsed.effectiveDate;
-        _noteController.text = parsed.note;
-        // 标记是否为 AI 推荐的新分类（数据库中不存在）
-        _isNewCategory =
-            parsedCategoryName != null &&
-            parsedCategoryName.isNotEmpty &&
-            !categoryExists;
       });
       debugPrint(
         '[VoiceInput] 状态切换为 result, '
-        'categoryExists=$categoryExists, '
-        'isNewCategory=$_isNewCategory',
+        '账目数=${mergedList.length}',
       );
     } catch (e, stack) {
       debugPrint('[VoiceInput] 停止录音/解析出错: $e\n$stack');
@@ -328,11 +387,95 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     }
   }
 
+  /// ASR 服务端出错时自动停止录音（如"15 秒未发送音频数据"等 task-failed）
+  ///
+  /// 直接停止录音器与音频发送，提示错误后回到空闲态，不进入解析流程。
+  void _stopRecordingForAsrError() {
+    final l10n = AppLocalizations.of(context);
+    _firstChunkTimer?.cancel();
+    _firstChunkTimer = null;
+
+    // 停止音频订阅与底层录音器，避免继续向失效连接发送数据
+    _audioSubscription?.cancel();
+    _audioSubscription = null;
+    unawaited(_recorder.stop().catchError((_) => null));
+    _pulseController.stop();
+
+    if (!mounted) return;
+    TopNotification.show(
+      context,
+      message: l10n.speechRecognitionFailed('ASR connection error'),
+      type: TopNotificationType.error,
+    );
+    _resetToIdle();
+  }
+
+  /// 将指定下标的账目填充到编辑表单，并切换当前选中卡片
+  void _syncFormFromIndex(int index) {
+    if (index < 0 || index >= _parsedExpenses.length) return;
+    final item = _parsedExpenses[index];
+    final name = item.categoryName ?? '';
+    // 判断分类是否已存在（用于"新分类"标记）
+    final categories = ref.read(allCategoriesProvider).value ?? const [];
+    setState(() {
+      _selectedExpenseIndex = index;
+      _amountController.text = item.amount?.toStringAsFixed(2) ?? '';
+      _selectedCategoryName = name;
+      _selectedType = item.type ?? 'expense';
+      _selectedDate = item.date ?? DateTime.now();
+      _noteController.text = item.note;
+      _isNewCategory =
+          name.isNotEmpty && !categories.any((c) => c.name == name);
+    });
+  }
+
+  /// 当前选中卡片下标的有效金额（表单值，未编辑项用解析值）
+  double? _effectiveAmount(int index) {
+    if (index == _selectedExpenseIndex) {
+      return double.tryParse(_amountController.text.trim());
+    }
+    return _parsedExpenses[index].amount;
+  }
+
+  /// 当前选中卡片下标的有效分类名
+  String _effectiveCategoryName(int index) {
+    if (index == _selectedExpenseIndex) {
+      return _selectedCategoryName;
+    }
+    return _parsedExpenses[index].categoryName ?? '';
+  }
+
+  /// 当前选中卡片下标的有效交易类型
+  String _effectiveType(int index) {
+    if (index == _selectedExpenseIndex) {
+      return _selectedType;
+    }
+    return _parsedExpenses[index].type ?? 'expense';
+  }
+
+  /// 当前选中卡片下标的有效交易日期
+  DateTime _effectiveDate(int index) {
+    if (index == _selectedExpenseIndex) {
+      return _selectedDate;
+    }
+    return _parsedExpenses[index].date ?? _selectedDate;
+  }
+
+  /// 当前选中卡片下标的有效备注
+  String _effectiveNote(int index) {
+    if (index == _selectedExpenseIndex) {
+      return _noteController.text.trim();
+    }
+    return _parsedExpenses[index].note;
+  }
+
   /// 重置到初始状态
   void _resetToIdle() {
     _asrService?.disconnect();
     _asrService = null;
     _transcript = '';
+    _parsedExpenses = const [];
+    _selectedExpenseIndex = 0;
     _amountController.clear();
     _noteController.clear();
     _selectedCategoryName = '';
@@ -345,14 +488,18 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     });
   }
 
-  /// 确认创建交易记录
-  Future<void> _confirmTransaction() async {
+  /// 确认创建交易记录（多笔账目时批量保存）
+  /// 确认当前选中卡片 — 保存该笔账目并从卡片列表移除
+  Future<void> _confirmTransaction() => _confirmSingleExpense(_selectedExpenseIndex);
+
+  /// 单独确认单张账目卡片 — 保存该笔并从卡片列表移除
+  Future<void> _confirmSingleExpense(int index) async {
     if (_isSaving) return;
     final l10n = AppLocalizations.of(context);
 
-    final amountText = _amountController.text.trim();
-    final amount = double.tryParse(amountText);
+    final amount = _effectiveAmount(index);
     if (amount == null || amount <= 0) {
+      _syncFormFromIndex(index);
       TopNotification.show(
         context,
         message: l10n.enterValidAmount,
@@ -360,8 +507,9 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
       );
       return;
     }
-
-    if (_selectedCategoryName.isEmpty) {
+    final categoryName = _effectiveCategoryName(index);
+    if (categoryName.isEmpty) {
+      _syncFormFromIndex(index);
       TopNotification.show(
         context,
         message: l10n.pleaseSelectCategory,
@@ -373,71 +521,41 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     setState(() => _isSaving = true);
 
     try {
-      final now = DateTime.now();
-      final transactionDate = _selectedDate;
-      int categoryId;
-
-      if (_isNewCategory) {
-        // 新分类：自动创建分类，再创建交易
-        debugPrint('[VoiceInput] 自动创建新分类: $_selectedCategoryName');
-        final categoryDao = ref.read(categoryDaoProvider);
-        categoryId = await categoryDao.insert(
-          CategoriesTableCompanion(
-            name: Value(_selectedCategoryName),
-            icon: const Value('dotsThree'),
-            color: const Value('#69DB7C'),
-            type: Value(_selectedType),
-            sortOrder: const Value(0),
-            createdAt: Value(now),
-            updatedAt: Value(now),
-          ),
-        );
-        // 刷新分类数据源（下次进入时能立即看到新分类）
-        ref.invalidate(allCategoriesProvider);
-        debugPrint('[VoiceInput] 新分类已创建, id=$categoryId');
-      } else {
-        // 已有分类：按名称查找
-        final categories = await ref.read(allCategoriesProvider.future);
-        final selectedCategory = categories.firstWhere(
-          (c) => c.name == _selectedCategoryName,
-          orElse: () => categories.first,
-        );
-        categoryId = selectedCategory.id;
-        debugPrint(
-          '[VoiceInput] 保存交易: amount=$amount, '
-          'category=${selectedCategory.name}, type=$_selectedType, '
-          'date=$_selectedDate, note=${_noteController.text}',
-        );
-      }
-
-      await ref
-          .read(transactionDaoProvider)
-          .insert(
-            TransactionsTableCompanion.insert(
-              amount: amount,
-              categoryId: categoryId,
-              type: _selectedType,
-              date: transactionDate,
-              note: Value(
-                _noteController.text.trim().isEmpty
-                    ? null
-                    : _noteController.text.trim(),
-              ),
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
+      await _saveTransaction(
+        amount: amount,
+        categoryName: categoryName,
+        type: _effectiveType(index),
+        date: _effectiveDate(index),
+        note: _effectiveNote(index),
+      );
 
       if (!mounted) return;
-      debugPrint('[VoiceInput] 交易保存成功');
-      TopNotification.show(
-        context,
-        message: l10n.recordingSuccess,
-        type: TopNotificationType.success,
+
+      // 从卡片列表移除已确认项
+      _removeExpenseFromList(index);
+
+      debugPrint(
+        '[VoiceInput] 单笔确认成功，剩余 ${_parsedExpenses.length} 笔',
       );
-      context.pop();
+      if (!mounted) return;
+
+      if (_parsedExpenses.isEmpty) {
+        // 全部确认完成，返回上一页
+        TopNotification.show(
+          context,
+          message: l10n.recordingSuccess,
+          type: TopNotificationType.success,
+        );
+        context.pop();
+      } else {
+        TopNotification.show(
+          context,
+          message: l10n.recordingSuccess,
+          type: TopNotificationType.success,
+        );
+      }
     } catch (e, stack) {
-      debugPrint('[VoiceInput] 保存失败: $e\n$stack');
+      debugPrint('[VoiceInput] 单笔保存失败: $e\n$stack');
       if (!mounted) return;
       TopNotification.show(
         context,
@@ -447,6 +565,91 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  /// 取消单张账目卡片 — 不保存，仅从卡片列表移除
+  void _removeExpenseCard(int index) {
+    if (_isSaving) return;
+    _removeExpenseFromList(index);
+    // 全部移除后回到空闲态
+    if (_parsedExpenses.isEmpty) {
+      _resetToIdle();
+    }
+  }
+
+  /// 从卡片列表移除指定下标的账目，并重排选中索引、同步表单
+  void _removeExpenseFromList(int index) {
+    if (_parsedExpenses.isEmpty ||
+        index < 0 ||
+        index >= _parsedExpenses.length) {
+      return;
+    }
+    final next = List<ParsedExpense>.of(_parsedExpenses)..removeAt(index);
+    setState(() {
+      _parsedExpenses = next;
+      if (next.isEmpty) {
+        _selectedExpenseIndex = 0;
+      } else if (_selectedExpenseIndex >= next.length) {
+        _selectedExpenseIndex = next.length - 1;
+      } else if (index < _selectedExpenseIndex) {
+        _selectedExpenseIndex--;
+      }
+    });
+
+    // 还有剩余账目时，将表单同步到当前选中卡片
+    if (next.isNotEmpty) {
+      _syncFormFromIndex(_selectedExpenseIndex);
+    }
+  }
+
+  /// 保存单笔交易（查找/创建分类 + 插入交易记录）
+  Future<void> _saveTransaction({
+    required double amount,
+    required String categoryName,
+    required String type,
+    required DateTime date,
+    required String note,
+  }) async {
+    final now = DateTime.now();
+    final categoryDao = ref.read(categoryDaoProvider);
+    final transactionDao = ref.read(transactionDaoProvider);
+    final categories = await ref.read(allCategoriesProvider.future);
+
+    // 查找已有分类，不存在则自动创建
+    int categoryId;
+    final existing = categories.where((c) => c.name == categoryName);
+    if (existing.isNotEmpty) {
+      categoryId = existing.first.id;
+    } else {
+      debugPrint('[VoiceInput] 自动创建新分类: $categoryName');
+      categoryId = await categoryDao.insert(
+        CategoriesTableCompanion(
+          name: Value(categoryName),
+          icon: const Value('dotsThree'),
+          color: const Value('#69DB7C'),
+          type: Value(type),
+          sortOrder: const Value(0),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+    }
+
+    await transactionDao.insert(
+      TransactionsTableCompanion.insert(
+        amount: amount,
+        categoryId: categoryId,
+        type: type,
+        date: date,
+        note: Value(note.isEmpty ? null : note),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    debugPrint(
+      '[VoiceInput] 已保存: amount=$amount, category=$categoryName, '
+      'type=$type, date=$date, note="$note"',
+    );
   }
 
   // ─── Build ─────────────────────────────────
@@ -824,16 +1027,18 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
   /// 结果态：最终文本 + 编辑表单 + 确认添加 + 取消按钮
   ///
-  /// 注意：结果态不显示波纹动画（用户松开按钮后不再需要）
+  /// 多笔账目时顶部显示横向卡片选择器（类似 Android 前台任务卡片），
+  /// 点击卡片切换当前编辑的账单；单笔时保持原有单一表单体验。
   Widget _buildResultLayout(BuildContext context) {
+    final isMulti = _parsedExpenses.length > 1;
     return SingleChildScrollView(
       child: Column(
         children: [
-          // const SizedBox(height: 24),
-          // 最终识别文本
-          // _buildRecognitionCard(text: _transcript, showLabel: true),
-          //const SizedBox(height: 24),
-          // 编辑表单
+          if (isMulti) ...[
+            _buildExpenseCardList(context),
+            const SizedBox(height: 20),
+          ],
+          // 编辑表单（当前选中卡片）
           _buildEditForm(context),
           const SizedBox(height: 24),
           // 底部操作行：确认添加账目（左）+ 取消按钮（右），横向并列
@@ -846,6 +1051,159 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  // ─── 多账目卡片选择器 ──────────────────────────
+
+  /// 横向排列的账目卡片列表（仅多笔账目时显示）
+  Widget _buildExpenseCardList(BuildContext context) {
+    return SizedBox(
+      height: 112,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _parsedExpenses.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, index) => _buildExpenseCard(context, index),
+      ),
+    );
+  }
+
+  /// 单张账目卡片 — 展示分类、金额、备注，点击选中
+  Widget _buildExpenseCard(BuildContext context, int index) {
+    final l10n = AppLocalizations.of(context);
+    final item = _parsedExpenses[index];
+    final isSelected = index == _selectedExpenseIndex;
+    final categoryName = item.categoryName ?? l10n.uncategorized;
+    final amount = item.amount?.toStringAsFixed(2) ?? '--';
+    final note = item.note.isEmpty ? '' : item.note;
+
+    return GestureDetector(
+      onTap: () => _syncFormFromIndex(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 160,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.glassFillAccent(context)
+              : AppTheme.glassFill(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppTheme.accentBlue.withValues(alpha: 0.8)
+                : AppTheme.glassStroke(context),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 序号 + 分类名 + 单独确认按钮
+            Row(
+              children: [
+                Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textOnSurface(context).withValues(
+                      alpha: 0.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    categoryName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textOnSurface(context),
+                    ),
+                  ),
+                ),
+                // 取消该卡片按钮：不保存，仅从列表移除
+                GestureDetector(
+                  onTap: () => _removeExpenseCard(index),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppTheme.glassFillStrong(context),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppTheme.glassStroke(context),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      PhosphorIconsLight.x,
+                      size: 12,
+                      color: AppTheme.textOnSurfaceSecondary(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // 单独确认按钮：保存该笔并从列表移除
+                GestureDetector(
+                  onTap: () => _confirmSingleExpense(index),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppTheme.accentBlue.withValues(alpha: 0.15)
+                          : AppTheme.glassFillStrong(context),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? AppTheme.accentBlue.withValues(alpha: 0.6)
+                            : AppTheme.glassStroke(context),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      PhosphorIconsLight.check,
+                      size: 12,
+                      color: isSelected
+                          ? AppTheme.accentBlue
+                          : AppTheme.textOnSurfaceSecondary(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // 金额
+            Text(
+              '¥ $amount',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? AppTheme.accentBlue
+                    : AppTheme.textOnSurface(context),
+              ),
+            ),
+            if (note.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                note,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textOnSurfaceTertiary(context),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1046,6 +1404,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     final l10n = AppLocalizations.of(context);
     return TextField(
       controller: _noteController,
+      minLines: 2,
+      maxLines: 5,
       style: TextStyle(fontSize: 16, color: AppTheme.textOnSurface(context)),
       decoration: _buildGlassInputDecoration(
         hintText: l10n.addNoteHint,

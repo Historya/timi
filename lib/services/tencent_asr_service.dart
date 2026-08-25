@@ -234,9 +234,12 @@ class TencentAsrService implements AsrService {
   // ============================================================
   @override
   void sendAudio(Uint8List pcmChunk) {
-    if (_channel != null && _isConnected) {
+    if (_channel == null || !_isConnected) return;
+    try {
       // 发送原始 PCM Int16 二进制数据
       _channel!.sink.add(pcmChunk);
+    } catch (_) {
+      // 连接已关闭时静默丢弃，避免音频流回调抛出异常
     }
   }
   @override

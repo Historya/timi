@@ -148,9 +148,86 @@ class ExpenseParser {
     if (text.isEmpty) {
       return const ParsedExpense(note: '');
     }
+    return _parseSegment(text, _amountRegex.firstMatch(text));
+  }
 
+  /// 解析语音文本中可能包含的多笔账目
+  ///
+  /// 按文本中每个金额出现的位置切分片段，每个片段独立解析。
+  /// 例如："午饭25块，打车30块" → [餐饮25, 交通30]。
+  /// 无金额或仅一个金额时，行为与 [parse] 一致。
+  static List<ParsedExpense> parseAll(String text) {
+    if (text.isEmpty) {
+      return const [ParsedExpense(note: '')];
+    }
+
+    final matches = _amountRegex.allMatches(text).toList();
+    if (matches.length <= 1) {
+      return [parse(text)];
+    }
+
+    final results = <ParsedExpense>[];
+    for (var i = 0; i < matches.length; i++) {
+      // 每笔账目的文本片段：从前一金额结尾（首笔为文本开头）到当前金额结尾，
+      // 这样金额前的描述词（如"午饭25块"的"午饭"）归属当前笔
+      final prevEnd = i == 0 ? 0 : matches[i - 1].end;
+      final segment = text.substring(prevEnd, matches[i].end).trim();
+      results.add(_parseSegment(segment, _amountRegex.firstMatch(segment)));
+    }
+    return results;
+  }
+
+  /// 对多笔账目按同类（分类 + 类型）合并
+  ///
+  /// 同分类的多笔账目合并为一条：金额相加、备注用分号拼接。
+  /// 用于语音输入多笔账目时的自动归类，减少用户确认负担。
+  static List<ParsedExpense> mergeSameCategory(List<ParsedExpense> items) {
+    if (items.length <= 1) {
+      return items;
+    }
+
+    // 按 (类型, 分类) 分组，未识别分类的账目单独成组
+    final groups = <String, List<ParsedExpense>>{};
+    for (final item in items) {
+      final key = '${item.type ?? 'expense'}|${item.categoryName ?? ''}';
+      groups.putIfAbsent(key, () => []).add(item);
+    }
+
+    return groups.values.map((group) {
+      if (group.length == 1) {
+        return group.first;
+      }
+
+      // 金额求和（忽略无有效金额的项）
+      double? total;
+      final notes = <String>[];
+      DateTime? date;
+      for (final item in group) {
+        if (item.hasValidAmount) {
+          total = (total ?? 0) + item.amount!;
+        }
+        final note = item.note.trim();
+        if (note.isNotEmpty) {
+          notes.add(note);
+        }
+        date ??= item.date;
+      }
+
+      return ParsedExpense(
+        amount: total,
+        categoryName: group.first.categoryName,
+        type: group.first.type,
+        note: notes.join('；'),
+        date: date,
+      );
+    }).toList();
+  }
+
+  /// 解析单个文本片段为账目
+  ///
+  /// [amountMatch] 该片段内首次匹配到的金额，为 null 时金额解析失败。
+  static ParsedExpense _parseSegment(String text, RegExpMatch? amountMatch) {
     // 1. 提取金额
-    final amountMatch = _amountRegex.firstMatch(text);
     final double? amount;
     if (amountMatch != null) {
       amount = double.tryParse(amountMatch.group(1)!);

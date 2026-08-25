@@ -30,10 +30,11 @@ class DashScopeSemanticParser implements SemanticParserService {
   /// 系统提示词：设定 AI 记账助手的角色和行为
   ///
   /// 引导模型提取：金额、交易类型、分类、备注（含时间/地点）、日期。
+  /// 支持一次输入多笔账目，返回 JSON 数组。
   static const String _systemPrompt = '''
-你是一个智能记账助手。请从用户的语音识别文本中提取账单信息，并以严格的 JSON 格式返回。
+你是一个智能记账助手。请从用户的语音识别文本中提取账单信息，并以严格的 JSON 数组格式返回，数组的每一项代表一笔账目。
 
-你返回的 JSON 必须包含以下字段：
+每一笔账目必须包含以下字段：
 - amount: 金额（数字，单位：元），必须为正数
 - type: 交易类型（"expense" 表示支出、"income" 表示收入）
 - categoryName: 分类名称（优先使用：餐饮、交通、购物、娱乐、居住、医疗、教育、通讯、工资、红包、转账、日用、美妆、宠物、运动、旅行、数码、礼物、社交、其他）
@@ -45,33 +46,37 @@ class DashScopeSemanticParser implements SemanticParserService {
 2. 如果文本没有明确说明是收入，默认为 expense
 3. 如果没有明确分类，根据内容推断最合适的分类
 4. note 字段应尽可能包含消费时间和地点，使其读起来像自然的记账备注
-5. 仅返回 JSON 对象，不要 markdown 代码块，不要额外文字说明
+5. 如果语音文本中包含多笔账目，必须逐笔列出，不能遗漏任何一笔
+6. 仅返回 JSON 数组，不要 markdown 代码块，不要额外文字说明
 
 示例：
 用户输入："今天中午和同事在海底捞吃饭花了380块钱"
-你返回：{"amount":380,"type":"expense","categoryName":"餐饮","note":"中午在海底捞吃饭","date":"2026-05-24"}
+你返回：[{"amount":380,"type":"expense","categoryName":"餐饮","note":"中午在海底捞吃饭","date":"2026-05-24"}]
 
 用户输入："下午3点在星巴克买了一杯咖啡38元"
-你返回：{"amount":38,"type":"expense","categoryName":"餐饮","note":"下午在星巴克买咖啡","date":"2026-05-24"}
+你返回：[{"amount":38,"type":"expense","categoryName":"餐饮","note":"下午在星巴克买咖啡","date":"2026-05-24"}]
 
 用户输入："收到工资15000块"
-你返回：{"amount":15000,"type":"income","categoryName":"工资","note":"工资","date":"2026-05-24"}
+你返回：[{"amount":15000,"type":"income","categoryName":"工资","note":"工资","date":"2026-05-24"}]
 
 用户输入："15号交房租3000"
-你返回：{"amount":3000,"type":"expense","categoryName":"居住","note":"交房租","date":"2026-05-15"}
+你返回：[{"amount":3000,"type":"expense","categoryName":"居住","note":"交房租","date":"2026-05-15"}]
 
 用户输入："晚上打车从公司回家花了25块钱"
-你返回：{"amount":25,"type":"expense","categoryName":"交通","note":"晚上打车回家","date":"2026-05-24"}
+你返回：[{"amount":25,"type":"expense","categoryName":"交通","note":"晚上打车回家","date":"2026-05-24"}]
+
+用户输入："午饭花了25块，打车去机场花了80块"
+你返回：[{"amount":25,"type":"expense","categoryName":"餐饮","note":"午饭","date":"2026-05-24"},{"amount":80,"type":"expense","categoryName":"交通","note":"打车去机场","date":"2026-05-24"}]
 ''';
 
   @override
-  Future<ParsedExpense> parse({
+  Future<List<ParsedExpense>> parse({
     required String text,
     required String apiKey,
     DateTime? today,
   }) async {
     if (text.isEmpty) {
-      return const ParsedExpense(note: '');
+      return const [ParsedExpense(note: '')];
     }
 
     final referenceDate = today ?? DateTime.now();
@@ -93,7 +98,7 @@ class DashScopeSemanticParser implements SemanticParserService {
       'parameters': {
         'result_format': 'message',
         'temperature': 0.1, // 低温度确保输出稳定
-        'max_tokens': 256,
+        'max_tokens': 512,
       },
     });
 
@@ -149,10 +154,11 @@ class DashScopeSemanticParser implements SemanticParserService {
     }
   }
 
-  /// 解析 AI 模型返回的 JSON 文本
+  /// 解析 AI 模型返回的 JSON 文本（JSON 数组）
   ///
-  /// 处理模型可能返回的 markdown 代码块包裹的 JSON
-  ParsedExpense _parseAiResponse(String content) {
+  /// 处理模型可能返回的 markdown 代码块包裹的 JSON。
+  /// 兼容模型降级返回单个 JSON 对象的情况（包装为单元素列表）。
+  List<ParsedExpense> _parseAiResponse(String content) {
     // 去除可能的 markdown 代码块标记（```json ... ```）
     String jsonStr = content.trim();
     if (jsonStr.startsWith('```')) {
@@ -168,14 +174,40 @@ class DashScopeSemanticParser implements SemanticParserService {
       jsonStr = jsonStr.substring(1, jsonStr.length - 1);
     }
 
-    // 解析 JSON
-    final Map<String, dynamic> data;
+    // 解析 JSON，兼容数组与单个对象两种返回
+    final dynamic decoded;
     try {
-      data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      decoded = jsonDecode(jsonStr);
     } catch (e) {
       throw SemanticParseException('AI 返回内容无法解析为 JSON: $jsonStr');
     }
 
+    final List<dynamic> items;
+    if (decoded is List) {
+      items = decoded;
+    } else if (decoded is Map<String, dynamic>) {
+      items = [decoded];
+    } else {
+      throw SemanticParseException('AI 返回的 JSON 结构不合法: $jsonStr');
+    }
+
+    if (items.isEmpty) {
+      throw const SemanticParseException('AI 返回的账目列表为空');
+    }
+
+    // 逐笔解析
+    final results = <ParsedExpense>[];
+    for (final item in items) {
+      if (item is! Map<String, dynamic>) {
+        throw const SemanticParseException('AI 返回的账目格式不合法');
+      }
+      results.add(_parseExpenseItem(item));
+    }
+    return results;
+  }
+
+  /// 解析单笔账目 JSON 对象
+  ParsedExpense _parseExpenseItem(Map<String, dynamic> data) {
     // 提取金额
     final double? amount;
     final rawAmount = data['amount'];

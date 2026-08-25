@@ -143,4 +143,89 @@ void main() {
       expect(result.note, '今天下午去机场花了');
     });
   });
+
+  group('ExpenseParser.parseAll() - 多账目切分', () {
+    test('两笔不同分类', () {
+      final results = ExpenseParser.parseAll('午饭25块，打车30块');
+      expect(results, hasLength(2));
+      expect(results[0].amount, 25.0);
+      expect(results[0].categoryName, '餐饮');
+      expect(results[1].amount, 30.0);
+      expect(results[1].categoryName, '交通');
+    });
+
+    test('三笔账目', () {
+      final results = ExpenseParser.parseAll('早饭8块，午饭25块，晚饭40块');
+      expect(results, hasLength(3));
+      expect(results[0].amount, 8.0);
+      expect(results[1].amount, 25.0);
+      expect(results[2].amount, 40.0);
+      expect(results[0].categoryName, '餐饮');
+    });
+
+    test('单笔行为与 parse 一致', () {
+      final results = ExpenseParser.parseAll('打车 23 块钱');
+      expect(results, hasLength(1));
+      expect(results.first.amount, 23.0);
+      expect(results.first.categoryName, '交通');
+    });
+
+    test('无金额回退单条', () {
+      final results = ExpenseParser.parseAll('今天天气不错');
+      expect(results, hasLength(1));
+      expect(results.first.amount, isNull);
+    });
+
+    test('空文本返回空账目', () {
+      final results = ExpenseParser.parseAll('');
+      expect(results, hasLength(1));
+      expect(results.first.amount, isNull);
+    });
+  });
+
+  group('ExpenseParser.mergeSameCategory() - 同类合并', () {
+    test('同分类合并金额与备注', () {
+      final results = ExpenseParser.mergeSameCategory([
+        const ParsedExpense(amount: 25, categoryName: '餐饮', note: '午饭'),
+        const ParsedExpense(amount: 30, categoryName: '餐饮', note: '晚饭'),
+      ]);
+      expect(results, hasLength(1));
+      expect(results.first.amount, 55.0);
+      expect(results.first.categoryName, '餐饮');
+      expect(results.first.note, '午饭；晚饭');
+    });
+
+    test('不同分类不合并', () {
+      final results = ExpenseParser.mergeSameCategory([
+        const ParsedExpense(amount: 25, categoryName: '餐饮', note: '午饭'),
+        const ParsedExpense(amount: 30, categoryName: '交通', note: '打车'),
+      ]);
+      expect(results, hasLength(2));
+    });
+
+    test('单条原样返回', () {
+      final results = ExpenseParser.mergeSameCategory([
+        const ParsedExpense(amount: 25, categoryName: '餐饮', note: '午饭'),
+      ]);
+      expect(results, hasLength(1));
+      expect(results.first.amount, 25.0);
+    });
+
+    test('无分类的账目不与其他合并', () {
+      final results = ExpenseParser.mergeSameCategory([
+        const ParsedExpense(amount: 10, note: 'a'),
+        const ParsedExpense(amount: 20, categoryName: '餐饮', note: 'b'),
+      ]);
+      expect(results, hasLength(2));
+    });
+
+    test('忽略无有效金额的项后合并', () {
+      final results = ExpenseParser.mergeSameCategory([
+        const ParsedExpense(categoryName: '餐饮', note: '无金额'),
+        const ParsedExpense(amount: 30, categoryName: '餐饮', note: '晚饭'),
+      ]);
+      expect(results, hasLength(1));
+      expect(results.first.amount, 30.0);
+    });
+  });
 }

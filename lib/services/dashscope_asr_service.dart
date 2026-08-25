@@ -197,8 +197,11 @@ class DashScopeAsrService implements AsrService {
 
   @override
   void sendAudio(Uint8List pcmChunk) {
-    if (_channel != null && _isConnected) {
+    if (_channel == null || !_isConnected) return;
+    try {
       _channel!.sink.add(pcmChunk);
+    } catch (_) {
+      // 连接已关闭时静默丢弃，避免音频流回调抛出异常
     }
   }
 

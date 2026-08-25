@@ -36,13 +36,13 @@ class HybridExpenseParser {
   ///
   /// [text] 语音识别返回的中文文本
   /// [today] 参考日期
-  /// 返回 [ParsedExpense] 结构化解析结果
-  Future<ParsedExpense> parse({
+  /// 返回 [ParsedExpense] 结构化解析结果列表，支持多笔账目。
+  Future<List<ParsedExpense>> parse({
     required String text,
     DateTime? today,
   }) async {
     if (text.isEmpty) {
-      return const ParsedExpense(note: '');
+      return const [ParsedExpense(note: '')];
     }
 
     // 优先尝试 AI 语义解析
@@ -62,16 +62,21 @@ class HybridExpenseParser {
       }
     }
 
-    // 降级到规则引擎
-    final ruleResult = ExpenseParser.parse(text);
+    // 降级到规则引擎（支持多笔账目）
+    final ruleResults = ExpenseParser.parseAll(text);
 
     // 补充规则引擎缺失的字段
-    return ParsedExpense(
-      amount: ruleResult.amount,
-      categoryName: ruleResult.categoryName,
-      note: ruleResult.note,
-      type: 'expense', // 规则引擎默认为支出
-      date: today ?? DateTime.now(),
-    );
+    final referenceDate = today ?? DateTime.now();
+    return ruleResults
+        .map(
+          (r) => ParsedExpense(
+            amount: r.amount,
+            categoryName: r.categoryName,
+            note: r.note,
+            type: 'expense', // 规则引擎默认为支出
+            date: r.date ?? referenceDate,
+          ),
+        )
+        .toList();
   }
 }

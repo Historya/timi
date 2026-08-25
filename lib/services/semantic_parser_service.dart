@@ -19,8 +19,9 @@ abstract class SemanticParserService {
   /// [text] 语音识别返回的中文文本
   /// [apiKey] 调用 LLM 所需的 API Key
   /// [today] 参考日期，用于日期推理
-  /// 返回 [ParsedExpense] 结构化解析结果
-  Future<ParsedExpense> parse({
+  /// 返回 [ParsedExpense] 结构化解析结果列表。
+  /// 当语音文本包含多笔账目时返回多条（如"午饭25块，打车30块"）。
+  Future<List<ParsedExpense>> parse({
     required String text,
     required String apiKey,
     DateTime? today,
