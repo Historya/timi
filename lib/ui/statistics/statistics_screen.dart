@@ -353,8 +353,10 @@ class _ChartCard extends ConsumerWidget {
         height: 130,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) =>
-          const SizedBox(height: 130, child: Center(child: Text('暂无数据'))),
+      error: (_, _) => SizedBox(
+        height: 130,
+        child: Center(child: Text(l10n.noData)),
+      ),
     );
   }
 
@@ -408,10 +410,15 @@ class _BarChart extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     // 提取有效数据（>= 0）用于计算最大值
     final validValues = values.where((v) => v >= 0).toList();
+    // 空数据或全为 0 时（当月/当年无支出）显示无数据提示，
+    // 否则柱状图会渲染成不可见的 0 高度柱子，留出一段空白。
     if (validValues.isEmpty) {
       return SizedBox(height: 100, child: Center(child: Text(l10n.noData)));
     }
     final maxValue = validValues.reduce((a, b) => a > b ? a : b);
+    if (maxValue <= 0) {
+      return SizedBox(height: 100, child: Center(child: Text(l10n.noData)));
+    }
     return SizedBox(
       height: 100,
       child: Row(

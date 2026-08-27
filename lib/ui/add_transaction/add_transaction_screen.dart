@@ -40,6 +40,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   late String _type;
   CategoriesTableData? _selectedCategory;
   late DateTime _selectedDate;
+  // 防止双击保存按钮重复插入/更新交易
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -84,6 +86,19 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
   }
 
+  /// 切换交易类型，若已选分类属于另一类型则清空选择
+  ///
+  /// 交易与分类各自独立的 type 字段，且数据库无类型一致性约束。
+  /// 若不在此清空，编辑模式下可保存"支出交易 + 收入分类"的不一致数据。
+  void _switchType(String type) {
+    setState(() {
+      _type = type;
+      if (_selectedCategory != null && _selectedCategory!.type != type) {
+        _selectedCategory = null;
+      }
+    });
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final amountText = _amountController.text.trim();
@@ -96,7 +111,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       return;
     }
     final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) {
+    // tryParse 能解析 'NaN'/'Infinity'，且 NaN <= 0 为 false，必须用 isFinite 拦截
+    if (amount == null || !amount.isFinite || amount <= 0) {
       TopNotification.show(
         context,
         message: l10n.enterValidAmount,
@@ -113,6 +129,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       return;
     }
 
+    // 双击"保存"或"完成"时防止重复插入
+    if (_isSaving) return;
+    _isSaving = true;
+    try {
+      await _performSave(amount);
+    } finally {
+      _isSaving = false;
+    }
+  }
+
+  /// 执行数据库写入与结果通知（由 [_save] 加锁调用）
+  Future<void> _performSave(double amount) async {
     final now = DateTime.now();
     final dao = ref.read(transactionDaoProvider);
 
@@ -305,7 +333,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _type = TransactionType.expense.value),
+              onTap: () => _switchType(TransactionType.expense.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -335,7 +363,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _type = TransactionType.income.value),
+              onTap: () => _switchType(TransactionType.income.value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
