@@ -91,7 +91,7 @@ class _UserInfoRow extends ConsumerWidget {
     return FutureBuilder<String?>(
       future: ref.read(settingsDaoProvider).get('nickname'),
       builder: (context, snapshot) {
-        final nickname = snapshot.data ?? 'Tom';
+        final nickname = snapshot.data ?? 'Timi';
         return Row(
           children: [
             // 用户头像：80×80 圆形毛玻璃背景，白色用户图标
