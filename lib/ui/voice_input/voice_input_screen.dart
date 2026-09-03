@@ -12,7 +12,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:record/record.dart';
-import 'package:timi/core/constants/transaction_type.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -22,6 +21,7 @@ import 'package:timi/services/asr_service.dart';
 import 'package:timi/services/expense_parser.dart';
 import 'package:timi/services/semantic_parser.dart';
 import 'package:timi/ui/shared/widgets/top_notification.dart';
+import 'package:timi/ui/voice_input/widgets/expense_card_picker.dart';
 
 /// 语音输入页面状态枚举
 enum _VoiceInputState {
@@ -1025,19 +1025,25 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     );
   }
 
-  /// 结果态：最终文本 + 编辑表单 + 确认添加 + 取消按钮
+  /// 结果态：最终文本 + 账目卡片 + 编辑表单 + 确认添加 + 取消按钮
   ///
-  /// 多笔账目时顶部显示横向卡片选择器（类似 Android 前台任务卡片），
-  /// 点击卡片切换当前编辑的账单；单笔时保持原有单一表单体验。
+  /// 单笔/多笔统一展示：顶部为横向卡片选择器（类似 Android 前台任务卡片），
+  /// 单笔时显示一张始终选中的卡片，多笔时可点击卡片切换当前编辑的账单。
   Widget _buildResultLayout(BuildContext context) {
-    final isMulti = _parsedExpenses.length > 1;
     return SingleChildScrollView(
       child: Column(
         children: [
-          if (isMulti) ...[
-            _buildExpenseCardList(context),
-            const SizedBox(height: 20),
-          ],
+          // 账目卡片选择器（单笔/多笔统一展示）
+          ExpenseCardPicker(
+            expenses: _parsedExpenses,
+            selectedIndex: _selectedExpenseIndex,
+            categoryNameOf: _effectiveCategoryName,
+            categoryColorOf: _categoryColorByName,
+            onSelect: _syncFormFromIndex,
+            onConfirm: _confirmSingleExpense,
+            onRemove: _removeExpenseCard,
+          ),
+          const SizedBox(height: 20),
           // 编辑表单（当前选中卡片）
           _buildEditForm(context),
           const SizedBox(height: 24),
@@ -1051,159 +1057,6 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           ),
           const SizedBox(height: 24),
         ],
-      ),
-    );
-  }
-
-  // ─── 多账目卡片选择器 ──────────────────────────
-
-  /// 横向排列的账目卡片列表（仅多笔账目时显示）
-  Widget _buildExpenseCardList(BuildContext context) {
-    return SizedBox(
-      height: 112,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _parsedExpenses.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (context, index) => _buildExpenseCard(context, index),
-      ),
-    );
-  }
-
-  /// 单张账目卡片 — 展示分类、金额、备注，点击选中
-  Widget _buildExpenseCard(BuildContext context, int index) {
-    final l10n = AppLocalizations.of(context);
-    final item = _parsedExpenses[index];
-    final isSelected = index == _selectedExpenseIndex;
-    final categoryName = item.categoryName ?? l10n.uncategorized;
-    final amount = item.amount?.toStringAsFixed(2) ?? '--';
-    final note = item.note.isEmpty ? '' : item.note;
-
-    return GestureDetector(
-      onTap: () => _syncFormFromIndex(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 160,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.glassFillAccent(context)
-              : AppTheme.glassFill(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppTheme.accentBlue.withValues(alpha: 0.8)
-                : AppTheme.glassStroke(context),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 序号 + 分类名 + 单独确认按钮
-            Row(
-              children: [
-                Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textOnSurface(context).withValues(
-                      alpha: 0.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    categoryName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textOnSurface(context),
-                    ),
-                  ),
-                ),
-                // 取消该卡片按钮：不保存，仅从列表移除
-                GestureDetector(
-                  onTap: () => _removeExpenseCard(index),
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: AppTheme.glassFillStrong(context),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.glassStroke(context),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      PhosphorIconsLight.x,
-                      size: 12,
-                      color: AppTheme.textOnSurfaceSecondary(context),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // 单独确认按钮：保存该笔并从列表移除
-                GestureDetector(
-                  onTap: () => _confirmSingleExpense(index),
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppTheme.accentBlue.withValues(alpha: 0.15)
-                          : AppTheme.glassFillStrong(context),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? AppTheme.accentBlue.withValues(alpha: 0.6)
-                            : AppTheme.glassStroke(context),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      PhosphorIconsLight.check,
-                      size: 12,
-                      color: isSelected
-                          ? AppTheme.accentBlue
-                          : AppTheme.textOnSurfaceSecondary(context),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            // 金额
-            Text(
-              '¥ $amount',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isSelected
-                    ? AppTheme.accentBlue
-                    : AppTheme.textOnSurface(context),
-              ),
-            ),
-            if (note.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                note,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textOnSurfaceTertiary(context),
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -1315,7 +1168,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
               fontSize: 15,
               fontWeight: FontWeight.w600,
               color: isSelected
-                  ? AppTheme.textOnSurface(context)
+                  ? AppTheme.accentBlue
                   : AppTheme.textOnSurfaceTertiary(context),
             ),
           ),
@@ -1338,16 +1191,28 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
           _buildTypeSegment(
             typeValue: 'expense',
             label: l10n.expenseLabel,
-            onTap: () => setState(() => _selectedType = 'expense'),
+            onTap: () => _onTypeChanged('expense'),
           ),
           _buildTypeSegment(
             typeValue: 'income',
             label: l10n.incomeLabel,
-            onTap: () => setState(() => _selectedType = 'income'),
+            onTap: () => _onTypeChanged('income'),
           ),
         ],
       ),
     );
+  }
+
+  /// 切换交易类型 — 类型变化时清空分类值并重置新分类标记
+  ///
+  /// 分类按类型归档，切换后原分类不再适用，需重新选择。
+  void _onTypeChanged(String type) {
+    if (_selectedType == type) return;
+    setState(() {
+      _selectedType = type;
+      _selectedCategoryName = '';
+      _isNewCategory = false;
+    });
   }
 
   /// 构建毛玻璃输入框通用的 InputDecoration
@@ -1484,16 +1349,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
 
     return categoriesAsync.when(
       data: (categories) {
-        // 筛选支出类型分类（语音输入默认创建支出账单）
-        final expenseCategories = categories
-            .where((c) => c.type == TransactionType.expense.value)
+        // 按当前交易类型筛选分类（支出显示支出分类，收入显示收入分类）
+        final typeCategories = categories
+            .where((c) => c.type == _selectedType)
             .toList();
 
         // 如果当前选中的是 AI 推荐新分类（数据库中不存在），
         // 则保留选中值不变，稍后在 items 中添加该选项
         final categoryExists =
             _selectedCategoryName.isNotEmpty &&
-            expenseCategories.any((c) => c.name == _selectedCategoryName);
+            typeCategories.any((c) => c.name == _selectedCategoryName);
         if (!categoryExists &&
             !_isNewCategory &&
             _selectedCategoryName.isNotEmpty) {
@@ -1566,7 +1431,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                     ),
                   ),
                 // 已有分类列表
-                ...expenseCategories.map((c) {
+                ...typeCategories.map((c) {
                   return DropdownMenuItem<String>(
                     value: c.name,
                     child: Row(
@@ -1593,7 +1458,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
                   setState(() {
                     _selectedCategoryName = value;
                     // 判断用户选的是否为已有分类
-                    _isNewCategory = !expenseCategories.any(
+                    _isNewCategory = !typeCategories.any(
                       (c) => c.name == value,
                     );
                   });
@@ -1616,6 +1481,20 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     final h = hex.replaceFirst('#', '');
     final full = h.length == 6 ? 'FF$h' : h;
     return Color(int.parse(full, radix: 16));
+  }
+
+  /// 按分类名查询数据库分类颜色，用于卡片边框着色
+  ///
+  /// 分类不存在（如 AI 推荐新分类）时返回 null，卡片回退默认边框样式。
+  Color? _categoryColorByName(String name) {
+    if (name.isEmpty) return null;
+    final categories = ref.read(allCategoriesProvider).value ?? const [];
+    for (final c in categories) {
+      if (c.name == name) {
+        return _parseHexColor(c.color);
+      }
+    }
+    return null;
   }
 }
 

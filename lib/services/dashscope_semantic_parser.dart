@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-
 import 'package:timi/services/expense_parser.dart';
 import 'package:timi/services/semantic_parser_service.dart';
 
@@ -32,41 +31,36 @@ class DashScopeSemanticParser implements SemanticParserService {
   /// 引导模型提取：金额、交易类型、分类、备注（含时间/地点）、日期。
   /// 支持一次输入多笔账目，返回 JSON 数组。
   static const String _systemPrompt = '''
-你是一个智能记账助手。请从用户的语音识别文本中提取账单信息，并以严格的 JSON 数组格式返回，数组的每一项代表一笔账目。
+    你是一个智能记账助手。请从用户的语音识别文本中提取账单信息，并以严格的 JSON 数组格式返回，数组的每一项代表一笔账目。
 
-每一笔账目必须包含以下字段：
-- amount: 金额（数字，单位：元），必须为正数
-- type: 交易类型（"expense" 表示支出、"income" 表示收入）
-- categoryName: 分类名称（优先使用：餐饮、交通、购物、娱乐、居住、医疗、教育、通讯、工资、红包、转账、日用、美妆、宠物、运动、旅行、数码、礼物、社交、其他）
-- note: 备注说明（简洁的自然语言描述，应包含消费时间、地点等关键信息。例如："中午在海底捞吃饭"、"在星巴克买咖啡"、"下午3点打车去机场"、"15号交房租"）
-- date: 交易日期（格式：YYYY-MM-DD，如果文本没有明确日期则使用当天日期）
+    每一笔账目必须包含以下字段：
+    - amount: 金额（数字，单位：元），必须为正数
+    - type: 交易类型（"expense" 表示支出、"income" 表示收入）
+    - categoryName: 分类名称（优先使用：餐饮、交通、购物、娱乐、居住、医疗、教育、通讯、工资、红包、转账、日用、美妆、宠物、运动、旅行、数码、礼物、社交、其他）
+    - note: 备注说明（简洁的自然语言描述，应包含消费时间、地点等关键信息。例如："中午在海底捞吃饭"、"在星巴克买咖啡"、"下午3点打车去机场"、"15号交房租"）
+    - date: 交易日期（格式：YYYY-MM-DD HH:mm:ss，如果文本没有明确日期则使用当天日期）
 
-要求：
-1. 金额必须为有效正数
-2. 如果文本没有明确说明是收入，默认为 expense
-3. 如果没有明确分类，根据内容推断最合适的分类
-4. note 字段应尽可能包含消费时间和地点，使其读起来像自然的记账备注
-5. 如果语音文本中包含多笔账目，必须逐笔列出，不能遗漏任何一笔
-6. 仅返回 JSON 数组，不要 markdown 代码块，不要额外文字说明
+    要求：
+    1. 金额必须为有效正数
+    2. 如果文本没有明确说明是收入，默认为 expense
+    3. 如果没有明确分类，根据内容推断最合适的分类
+    4. note 字段应尽可能包含消费时间和地点，使其读起来像自然的记账备注
+    5. 如果语音文本中包含多笔账目，必须逐笔列出，不能遗漏任何一笔
+    6. 仅返回 JSON 数组，不要 markdown 代码块，不要额外文字说明
+    7. date请返回 完整的时间格式（YYYY-MM-DD HH:mm:ss）,如语义中有时间名词[昨天、前天]请根据参考时间自行计算时间、如果没有明确时间则使用参考时间
 
-示例：
-用户输入："今天中午和同事在海底捞吃饭花了380块钱"
-你返回：[{"amount":380,"type":"expense","categoryName":"餐饮","note":"中午在海底捞吃饭","date":"2026-05-24"}]
+    示例：
+    用户输入："下午3点在星巴克买了一杯咖啡38元"
+    你返回：[{"amount":38,"type":"expense","categoryName":"餐饮","note":"下午在星巴克买咖啡","date":"2026-05-24 13:10:15"}]
 
-用户输入："下午3点在星巴克买了一杯咖啡38元"
-你返回：[{"amount":38,"type":"expense","categoryName":"餐饮","note":"下午在星巴克买咖啡","date":"2026-05-24"}]
+    用户输入："收到工资15000块"
+    你返回：[{"amount":15000,"type":"income","categoryName":"工资","note":"工资","date":"2026-05-24 16:10:15"}]
 
-用户输入："收到工资15000块"
-你返回：[{"amount":15000,"type":"income","categoryName":"工资","note":"工资","date":"2026-05-24"}]
+    用户输入："15号交房租3000"
+    你返回：[{"amount":3000,"type":"expense","categoryName":"居住","note":"交房租","date":"2026-05-15 12:10:15"}]
 
-用户输入："15号交房租3000"
-你返回：[{"amount":3000,"type":"expense","categoryName":"居住","note":"交房租","date":"2026-05-15"}]
-
-用户输入："晚上打车从公司回家花了25块钱"
-你返回：[{"amount":25,"type":"expense","categoryName":"交通","note":"晚上打车回家","date":"2026-05-24"}]
-
-用户输入："午饭花了25块，打车去机场花了80块"
-你返回：[{"amount":25,"type":"expense","categoryName":"餐饮","note":"午饭","date":"2026-05-24"},{"amount":80,"type":"expense","categoryName":"交通","note":"打车去机场","date":"2026-05-24"}]
+    用户输入："午饭花了25块，打车去机场花了80块"
+    你返回：[{"amount":25,"type":"expense","categoryName":"餐饮","note":"午饭","date":"2026-05-24 12:10:15"},{"amount":80,"type":"expense","categoryName":"交通","note":"打车去机场","date":"2026-05-24"}]
 ''';
 
   @override
@@ -80,11 +74,10 @@ class DashScopeSemanticParser implements SemanticParserService {
     }
 
     final referenceDate = today ?? DateTime.now();
-    final dateStr = DateFormat('yyyy-MM-dd').format(referenceDate);
+    final dateStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(referenceDate);
 
     // 构造用户消息，注入参考日期
-    final userMessage =
-        '语音文本：$text\n参考日期：$dateStr\n请返回 JSON。';
+    final userMessage = '语音文本：$text\n参考日期：$dateStr\n请返回 JSON。';
 
     // 构造 DashScope API 请求体
     final requestBody = jsonEncode({
@@ -146,7 +139,7 @@ class DashScopeSemanticParser implements SemanticParserService {
       }
 
       // 解析模型返回的 JSON 字符串
-      return _parseAiResponse(content);
+      return _parseAiResponse(content, referenceDate);
     } catch (e) {
       // 包装所有异常为 SemanticParseException
       if (e is SemanticParseException) rethrow;
@@ -158,7 +151,7 @@ class DashScopeSemanticParser implements SemanticParserService {
   ///
   /// 处理模型可能返回的 markdown 代码块包裹的 JSON。
   /// 兼容模型降级返回单个 JSON 对象的情况（包装为单元素列表）。
-  List<ParsedExpense> _parseAiResponse(String content) {
+  List<ParsedExpense> _parseAiResponse(String content, DateTime referenceDate) {
     // 去除可能的 markdown 代码块标记（```json ... ```）
     String jsonStr = content.trim();
     if (jsonStr.startsWith('```')) {
@@ -201,13 +194,16 @@ class DashScopeSemanticParser implements SemanticParserService {
       if (item is! Map<String, dynamic>) {
         throw const SemanticParseException('AI 返回的账目格式不合法');
       }
-      results.add(_parseExpenseItem(item));
+      results.add(_parseExpenseItem(item, referenceDate));
     }
     return results;
   }
 
   /// 解析单笔账目 JSON 对象
-  ParsedExpense _parseExpenseItem(Map<String, dynamic> data) {
+  ParsedExpense _parseExpenseItem(
+    Map<String, dynamic> data,
+    DateTime referenceDate,
+  ) {
     // 提取金额
     final double? amount;
     final rawAmount = data['amount'];
@@ -244,10 +240,13 @@ class DashScopeSemanticParser implements SemanticParserService {
     final rawDate = data['date'] as String?;
     if (rawDate != null && rawDate.isNotEmpty) {
       try {
-        date = DateFormat('yyyy-MM-dd').parseStrict(rawDate);
-      } catch (_) {
-        // 日期解析失败，使用 null（调用方会用 effectiveDate 获取当前日期）
-      }
+        if (rawDate.length == 10) {
+          // 仅有日期部分，补充时间为 00:00:00
+          date = DateFormat('yyyy-MM-dd ${referenceDate.hour}:${referenceDate.minute}:${referenceDate.second}').parseStrict(rawDate);
+        } else {
+          date = DateFormat('yyyy-MM-dd HH:mm:ss').parseStrict(rawDate);
+        }
+      } catch (ignored) {}
     }
 
     return ParsedExpense(
@@ -255,7 +254,7 @@ class DashScopeSemanticParser implements SemanticParserService {
       type: type,
       categoryName: categoryName,
       note: note,
-      date: date,
+      date: date ?? referenceDate,
     );
   }
 }
