@@ -53,6 +53,7 @@ class AppDatabase extends _$AppDatabase {
             value: Value("1303935613"),
           ),
         );
+        // 密钥不在代码中硬编码，由用户在设置页填写
         await into(settingsTable).insert(
           SettingsTableCompanion(
             key: Value(SettingsKeys.tencentSecretId),
