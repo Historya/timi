@@ -212,6 +212,16 @@ flutter pub run build_runner watch       # 自动重建
 - 语言设置存储在 DB key `language`
 - 切换语言自动触发页面重建 (localeRefreshProvider)
 
+## 项目文档
+
+详细的开发文档见 [docs/](./docs/README.md), 包括:
+
+- [架构与数据流](./docs/architecture.md)
+- [数据库设计](./docs/database.md)
+- [服务层 (ASR / AI 解析)](./docs/services.md)
+- [主题与共享组件](./docs/theme-design.md)
+- [代码规范与测试](./docs/conventions.md)
+
 ## 许可
 
 MIT License
