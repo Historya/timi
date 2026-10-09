@@ -10,6 +10,14 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:timi/services/asr_service.dart';
 
+/// 腾讯云 ASR 异常：凭证缺失、签名失败等可预期的业务错误
+class TencentAsrException implements Exception {
+  final String message;
+  const TencentAsrException(this.message);
+  @override
+  String toString() => message;
+}
+
 /// 腾讯云 ASR 实时语音识别引擎
 ///
 /// 基于 docs/tx_asr/index.html 参考实现。
@@ -76,6 +84,13 @@ class TencentAsrService implements AsrService {
   static String _generateVoiceId() {
     return 'dart_${DateTime.now().millisecondsSinceEpoch}';
   }
+  /// 日志脱敏：SecretId 只保留前 8 位
+  ///
+  /// 凭证未配置或长度不足 8 时返回原串，避免 substring 越界抛 RangeError
+  static String _maskSecretId(String secretId) {
+    if (secretId.length <= 8) return secretId;
+    return '${secretId.substring(0, 8)}***';
+  }
   /// 构建带签名的 WebSocket 连接 URL
   ///
   /// 签名步骤（对齐参考实现 docs/tx_asr/index.html 第 54-67 行）：
@@ -125,7 +140,7 @@ class TencentAsrService implements AsrService {
     // 调试日志（secretid 仅保留前 8 位，避免泄露）
     final maskedUrl = wsUrl.replaceAll(
       RegExp(r'secretid=[^&]+'),
-      'secretid=${secretId.substring(0, 8)}***',
+      'secretid=${_maskSecretId(secretId)}',
     );
     developer.log('[TencentASR] URL: $maskedUrl', name: 'TencentASR');
     return wsUrl;
@@ -151,6 +166,13 @@ class TencentAsrService implements AsrService {
   // ============================================================
   @override
   Future<void> connect({required String apiKey, required String model}) async {
+    // 凭证缺失时直接失败，避免签出无效 URL 后连接被服务端拒绝
+    if (appId.isEmpty || secretId.isEmpty || secretKey.isEmpty) {
+      developer.log('[TencentASR] 凭证未配置', name: 'TencentASR');
+      _isConnected = false;
+      _stateController.add(AsrConnectionState.error);
+      throw const TencentAsrException('腾讯云 ASR 凭证未配置（AppId/SecretId/SecretKey）');
+    }
     // 重置 completer 和 transcript，确保每次连接都是全新状态
     _completer = Completer<String>();
     _currentTranscript = '';

@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:record/record.dart';
+import 'package:timi/core/constants/settings_keys.dart';
 import 'package:timi/core/theme/app_theme.dart';
 import 'package:timi/data/database/app_database.dart';
 import 'package:timi/l10n/app_localizations.dart';
@@ -138,12 +139,28 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen>
     debugPrint('[VoiceInput] ASR 引擎: ${asrService.runtimeType}');
     _asrService = asrService;
 
-    // 检查并获取 API Key（只读取一次数据库）
+    // 检查并获取凭证（只读取一次数据库）
     String? apiKey;
+    final settingsDao = ref.read(settingsDaoProvider);
     if (asrService.engineId == 'dashscope') {
-      final settingsDao = ref.read(settingsDaoProvider);
-      apiKey = await settingsDao.get('dashscope_api_key');
+      apiKey = await settingsDao.get(SettingsKeys.dashscopeApiKey);
       if (apiKey == null || apiKey.isEmpty) {
+        if (!mounted) return;
+        TopNotification.show(
+          context,
+          message: l10n.asrConfigRequired,
+          type: TopNotificationType.warning,
+        );
+        return;
+      }
+    } else if (asrService.engineId == 'tencent') {
+      // 腾讯云需要 AppId/SecretId/SecretKey 三件套，缺一无法签名
+      final appId = await settingsDao.get(SettingsKeys.tencentAppId);
+      final secretId = await settingsDao.get(SettingsKeys.tencentSecretId);
+      final secretKey = await settingsDao.get(SettingsKeys.tencentSecretKey);
+      if ((appId ?? '').isEmpty ||
+          (secretId ?? '').isEmpty ||
+          (secretKey ?? '').isEmpty) {
         if (!mounted) return;
         TopNotification.show(
           context,
