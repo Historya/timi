@@ -99,7 +99,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ];
 
     // 当前是否有活跃搜索条件
-    final hasActiveSearch = _keyword.isNotEmpty || _activeFilterValue != FilterType.all.value;
+    final hasActiveSearch = _keyword.isNotEmpty || _activeFilterValue.isNotEmpty || _activeFilterValue.trim() != '';
 
     // 解析当前筛选参数传给 DAO
     String? searchType;
@@ -148,7 +148,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     required AppLocalizations l10n,
   }) {
     final dao = ref.read(transactionDaoProvider);
-    final searchStream = dao.search(keyword, type: type, categoryId: categoryId);
+    final searchStream = dao.search(keyword, type: type == FilterType.all.value ? null : type, categoryId: categoryId);
 
     return StreamBuilder<List<TransactionsTableData>>(
       stream: searchStream,
